@@ -3,7 +3,6 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Laravel\Horizon\Horizon;
 use Opcodes\LogViewer\Facades\LogViewer;
 
 class AppServiceProvider extends ServiceProvider
@@ -11,10 +10,7 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Register any application services.
      */
-    public function register(): void
-    {
-
-    }
+    public function register(): void {}
 
     /**
      * Bootstrap any application services.
@@ -23,9 +19,7 @@ class AppServiceProvider extends ServiceProvider
     {
         LogViewer::auth(function ($request) {
             return $request->user()
-            && in_array($request->user()->email, [
-            'it@kutoot.com',
-            ]);
+            && in_array($request->user()->email, config('log-viewer.emails'));
         });
 
     }
