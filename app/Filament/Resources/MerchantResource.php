@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Filament\Resources\Merchants;
+namespace App\Filament\Resources;
 
 use App\Filament\Resources\Merchants\Pages\CreateMerchant;
 use App\Filament\Resources\Merchants\Pages\EditMerchant;
 use App\Filament\Resources\Merchants\Pages\ListMerchants;
+use App\Filament\Resources\Merchants\RelationManagers\LocationsRelationManager;
 use App\Filament\Resources\Merchants\Schemas\MerchantForm;
 use App\Filament\Resources\Merchants\Tables\MerchantsTable;
 use App\Models\Merchant;
@@ -22,6 +23,8 @@ class MerchantResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Merchant Management';
+
     public static function form(Schema $schema): Schema
     {
         return MerchantForm::configure($schema);
@@ -35,7 +38,7 @@ class MerchantResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            LocationsRelationManager::class ,
         ];
     }
 

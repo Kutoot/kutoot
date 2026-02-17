@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\SubscriptionPlans\Pages;
 
-use App\Filament\Resources\SubscriptionPlans\SubscriptionPlanResource;
+use App\Filament\Resources\SubscriptionPlanResource;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateSubscriptionPlan extends CreateRecord

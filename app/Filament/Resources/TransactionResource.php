@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\Transactions;
+namespace App\Filament\Resources;
 
 use App\Filament\Resources\Transactions\Pages\CreateTransaction;
 use App\Filament\Resources\Transactions\Pages\EditTransaction;
@@ -19,6 +19,8 @@ class TransactionResource extends Resource
     protected static ?string $model = Transaction::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+
+    protected static string|\UnitEnum|null $navigationGroup = 'User Management';
 
     public static function form(Schema $schema): Schema
     {

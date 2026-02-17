@@ -134,7 +134,7 @@ class DummyDataSeeder extends Seeder
             'coupon_category_id' => $couponCatFood->id,
             'merchant_location_id' => $bananaMall->id, // Nano Banana Store
             'title' => 'Free Nano Banana',
-            'description' => 'One free Nano Banana with every purchase over $10.',
+            'description' => 'One free Nano Banana with every purchase over ₹10.',
             'discount_type' => DiscountType::Fixed,
             'discount_value' => 5, // Value of a banana?
             'min_order_value' => 10,

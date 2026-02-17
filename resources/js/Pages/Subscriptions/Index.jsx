@@ -1,5 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
+import CurrencySymbol from '@/Components/CurrencySymbol';
+
 
 export default function Index({ auth, plans, currentSubscription }) {
     const handleUpgrade = (planId) => {
@@ -26,8 +28,9 @@ export default function Index({ auth, plans, currentSubscription }) {
                                         Max Discounted Bills: {plan.max_discounted_bills}
                                     </p>
                                     <p className="text-gray-600 mb-4">
-                                        Max Redeemable Amount: ${parseFloat(plan.max_redeemable_amount).toFixed(2)}
+                                        Max Redeemable Amount: <CurrencySymbol />{parseFloat(plan.max_redeemable_amount).toFixed(2)}
                                     </p>
+
                                     <p className="text-gray-600 mb-6">
                                         Concurrent Campaigns: {plan.max_concurrent_campaigns_per_bill}
                                     </p>

@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Filament\Resources\Campaigns;
+namespace App\Filament\Resources;
 
 use App\Filament\Resources\Campaigns\Pages\CreateCampaign;
 use App\Filament\Resources\Campaigns\Pages\EditCampaign;
 use App\Filament\Resources\Campaigns\Pages\ListCampaigns;
+use App\Filament\Resources\Campaigns\RelationManagers\StampsRelationManager;
 use App\Filament\Resources\Campaigns\Schemas\CampaignForm;
 use App\Filament\Resources\Campaigns\Tables\CampaignsTable;
 use App\Models\Campaign;
@@ -22,6 +23,8 @@ class CampaignResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Promotion Management';
+
     public static function form(Schema $schema): Schema
     {
         return CampaignForm::configure($schema);
@@ -35,7 +38,7 @@ class CampaignResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            StampsRelationManager::class ,
         ];
     }
 

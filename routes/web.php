@@ -15,6 +15,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     )->name('dashboard');
 
     Route::post('/coupons/{coupon}/redeem', [\App\Http\Controllers\CouponController::class, 'redeem'])->name('coupons.redeem');
+    Route::post('/coupons/transactions/{transaction}/verify', [\App\Http\Controllers\CouponController::class, 'verifyPayment'])->name('coupons.verify-payment');
+
+    // QR Codes
+    Route::get('/executive/qr', [\App\Http\Controllers\ExecutiveQrController::class, 'index'])->name('executive.qr.index');
+    Route::get('/executive/qr/{qrCode}/download', [\App\Http\Controllers\ExecutiveQrController::class, 'download'])->name('executive.qr.download');
+    Route::post('/executive/qr/link', [\App\Http\Controllers\ExecutiveQrController::class, 'link'])->name('executive.qr.link');
+    Route::post('/admin/qr/generate', [\App\Http\Controllers\ExecutiveQrController::class, 'generateBatch'])->name('admin.qr.generate');
+
+    Route::get('/q/{token}', [\App\Http\Controllers\QrScanController::class, 'scan'])->name('qr.scan');
 
     // Subscriptions
     Route::get('/subscriptions', [\App\Http\Controllers\SubscriptionController::class, 'index'])->name('subscriptions.index');

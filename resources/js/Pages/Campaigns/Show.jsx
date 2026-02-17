@@ -1,5 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
+import CurrencySymbol from '@/Components/CurrencySymbol';
+
 
 export default function Show({ auth, campaign, bountyMeter, collectedCommission, issuedStamps }) {
     const progressPercentage = Math.min(Math.round(bountyMeter * 100), 100);
@@ -60,9 +62,10 @@ export default function Show({ auth, campaign, bountyMeter, collectedCommission,
                                     <div className="grid grid-cols-2 gap-4 mt-4 text-sm text-gray-600">
                                         <div className="bg-gray-50 p-3 rounded-lg">
                                             <span className="block font-bold text-gray-800">Review Spend</span>
-                                            <span className="block">Collected: ${parseFloat(collectedCommission).toFixed(2)}</span>
-                                            <span className="block text-xs text-gray-400">Target: ${parseFloat(campaign.reward_cost_target).toFixed(2)}</span>
+                                            <span className="block">Collected: <CurrencySymbol />{parseFloat(collectedCommission).toFixed(2)}</span>
+                                            <span className="block text-xs text-gray-400">Target: <CurrencySymbol />{parseFloat(campaign.reward_cost_target).toFixed(2)}</span>
                                         </div>
+
                                         <div className="bg-gray-50 p-3 rounded-lg">
                                             <span className="block font-bold text-gray-800">Stamps</span>
                                             <span className="block">Collected: {issuedStamps}</span>

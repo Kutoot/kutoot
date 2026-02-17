@@ -12,7 +12,7 @@ class SubscriptionPlanPolicy
      */
     public function viewAny(User $user): bool
     {
-        return false;
+        return $user->can('view-any-subscription-plan');
     }
 
     /**
@@ -20,7 +20,7 @@ class SubscriptionPlanPolicy
      */
     public function view(User $user, SubscriptionPlan $subscriptionPlan): bool
     {
-        return false;
+        return $user->can('view-subscription-plan');
     }
 
     /**
@@ -28,7 +28,7 @@ class SubscriptionPlanPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasRole('Super Admin');
+        return $user->can('create-subscription-plan');
     }
 
     /**
@@ -36,7 +36,7 @@ class SubscriptionPlanPolicy
      */
     public function update(User $user, SubscriptionPlan $subscriptionPlan): bool
     {
-        return $user->hasRole('Super Admin');
+        return $user->can('update-subscription-plan');
     }
 
     /**
@@ -44,7 +44,7 @@ class SubscriptionPlanPolicy
      */
     public function delete(User $user, SubscriptionPlan $subscriptionPlan): bool
     {
-        return $user->hasRole('Super Admin');
+        return $user->can('delete-subscription-plan');
     }
 
     /**
@@ -52,7 +52,7 @@ class SubscriptionPlanPolicy
      */
     public function restore(User $user, SubscriptionPlan $subscriptionPlan): bool
     {
-        return false;
+        return $user->can('restore-subscription-plan');
     }
 
     /**
@@ -60,6 +60,6 @@ class SubscriptionPlanPolicy
      */
     public function forceDelete(User $user, SubscriptionPlan $subscriptionPlan): bool
     {
-        return false;
+        return $user->can('force-delete-subscription-plan');
     }
 }

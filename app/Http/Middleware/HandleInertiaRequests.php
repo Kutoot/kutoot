@@ -34,6 +34,11 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'currency' => config('app.currency'),
+            'platform_fee' => config('app.platform_fee'),
+            'gst_rate' => config('app.gst_rate'),
+            'platform_fee_type' => config('app.platform_fee_type'),
+
         ];
     }
 }

@@ -39,7 +39,7 @@ return [
      |
      */
 
-    'debug' => (bool)env('APP_DEBUG', false),
+    'debug' => (bool) env('APP_DEBUG', false),
 
     /*
      |--------------------------------------------------------------------------
@@ -79,6 +79,16 @@ return [
      */
 
     'locale' => env('APP_LOCALE', 'en'),
+    'currency' => env('APP_CURRENCY', 'INR'),
+    'platform_fee' => env('PLATFORM_FEE', 10),
+    'gst_rate' => env('GST_RATE', 18),
+    'payment_default_gateway' => env('PAYMENT_DEFAULT_GATEWAY', 'razorpay'),
+    'platform_fee_type' => env('PLATFORM_FEE_TYPE', 'fixed'),
+
+    'razorpay' => [
+        'key_id' => env('RAZORPAY_KEY_ID'),
+        'key_secret' => env('RAZORPAY_KEY_SECRET'),
+    ],
 
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
 
@@ -101,22 +111,22 @@ return [
 
     'previous_keys' => [
         ...array_filter(
-        explode(',', (string)env('APP_PREVIOUS_KEYS', ''))
-    ),
+            explode(',', (string) env('APP_PREVIOUS_KEYS', ''))
+        ),
     ],
 
     /*
-     |--------------------------------------------------------------------------
-     | Maintenance Mode Driver
-     |--------------------------------------------------------------------------
-     |
-     | These configuration options determine the driver used to determine and
-     | manage Laravel's "maintenance mode" status. The "cache" driver will
-     | allow maintenance mode to be controlled across multiple machines.
-     |
-     | Supported drivers: "file", "cache"
-     |
-     */
+         |--------------------------------------------------------------------------
+         | Maintenance Mode Driver
+         |--------------------------------------------------------------------------
+         |
+         | These configuration options determine the driver used to determine and
+         | manage Laravel's "maintenance mode" status. The "cache" driver will
+         | allow maintenance mode to be controlled across multiple machines.
+         |
+         | Supported drivers: "file", "cache"
+         |
+         */
 
     'maintenance' => [
         'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),

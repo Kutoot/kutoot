@@ -12,7 +12,7 @@ class MerchantLocationPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasRole(['Super Admin', 'Merchant Admin']);
+        return $user->can('view-any-merchant-location');
     }
 
     /**
@@ -20,11 +20,7 @@ class MerchantLocationPolicy
      */
     public function view(User $user, MerchantLocation $merchantLocation): bool
     {
-        if ($user->hasRole('Super Admin')) {
-            return true;
-        }
-
-        return $user->hasRole('Merchant Admin') && $user->merchantLocations->contains($merchantLocation);
+        return $user->can('view-merchant-location') && $user->merchantLocations->contains($merchantLocation);
     }
 
     /**
@@ -32,7 +28,7 @@ class MerchantLocationPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasRole('Super Admin');
+        return $user->can('create-merchant-location');
     }
 
     /**
@@ -40,11 +36,7 @@ class MerchantLocationPolicy
      */
     public function update(User $user, MerchantLocation $merchantLocation): bool
     {
-        if ($user->hasRole('Super Admin')) {
-            return true;
-        }
-
-        return $user->hasRole('Merchant Admin') && $user->merchantLocations->contains($merchantLocation);
+        return $user->can('update-merchant-location') && $user->merchantLocations->contains($merchantLocation);
     }
 
     /**
@@ -52,7 +44,7 @@ class MerchantLocationPolicy
      */
     public function delete(User $user, MerchantLocation $merchantLocation): bool
     {
-        return false;
+        return $user->can('delete-merchant-location');
     }
 
     /**
@@ -60,7 +52,7 @@ class MerchantLocationPolicy
      */
     public function restore(User $user, MerchantLocation $merchantLocation): bool
     {
-        return false;
+        return $user->can('restore-merchant-location');
     }
 
     /**
@@ -68,6 +60,6 @@ class MerchantLocationPolicy
      */
     public function forceDelete(User $user, MerchantLocation $merchantLocation): bool
     {
-        return false;
+        return $user->can('force-delete-merchant-location');
     }
 }

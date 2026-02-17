@@ -12,7 +12,7 @@ class MerchantPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasRole('Super Admin');
+        return $user->can('view-any-merchant');
     }
 
     /**
@@ -20,7 +20,7 @@ class MerchantPolicy
      */
     public function view(User $user, Merchant $merchant): bool
     {
-        return $user->hasRole('Super Admin');
+        return $user->can('view-merchant');
     }
 
     /**
@@ -28,7 +28,7 @@ class MerchantPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasRole('Super Admin');
+        return $user->can('create-merchant');
     }
 
     /**
@@ -36,7 +36,7 @@ class MerchantPolicy
      */
     public function update(User $user, Merchant $merchant): bool
     {
-        return $user->hasRole('Super Admin');
+        return $user->can('update-merchant');
     }
 
     /**
@@ -44,7 +44,7 @@ class MerchantPolicy
      */
     public function delete(User $user, Merchant $merchant): bool
     {
-        return false;
+        return $user->can('delete-merchant');
     }
 
     /**
@@ -52,7 +52,7 @@ class MerchantPolicy
      */
     public function restore(User $user, Merchant $merchant): bool
     {
-        return false;
+        return $user->can('restore-merchant');
     }
 
     /**
@@ -60,6 +60,6 @@ class MerchantPolicy
      */
     public function forceDelete(User $user, Merchant $merchant): bool
     {
-        return false;
+        return $user->can('force-delete-merchant');
     }
 }

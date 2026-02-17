@@ -1,14 +1,19 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, useForm, router } from '@inertiajs/react';
+import { useState, useEffect } from 'react';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import Modal from '@/Components/Modal';
 import SecondaryButton from '@/Components/SecondaryButton';
+import CurrencySymbol from '@/Components/CurrencySymbol';
+import { usePage } from '@inertiajs/react';
+
 
 export default function Index({ auth, coupons, locations, planName }) {
+    const { platform_fee, gst_rate, platform_fee_type } = usePage().props;
+
     const [confirmingRedemption, setConfirmingRedemption] = useState(false);
     const [selectedCoupon, setSelectedCoupon] = useState(null);
 
@@ -16,6 +21,18 @@ export default function Index({ auth, coupons, locations, planName }) {
         merchant_location_id: '',
         amount: '',
     });
+
+    useEffect(() => {
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.async = true;
+        document.body.appendChild(script);
+
+        return () => {
+            document.body.removeChild(script);
+        }
+    }, []);
+
 
     const confirmRedemption = (coupon) => {
         setSelectedCoupon(coupon);
@@ -37,9 +54,95 @@ export default function Index({ auth, coupons, locations, planName }) {
 
         post(route('coupons.redeem', selectedCoupon.id), {
             preserveScroll: true,
-            onSuccess: () => closeModal(),
+            onSuccess: (page) => {
+                if (page.props.flash?.order || page.props.order) {
+                    // Logic for JSON response if handled by Inertia as visit
+                    // But we used response()->json() in controller which isn't ideal for Inertia partials
+                    // Let's adjust controller to use Inertia::render or handle it here
+                }
+            },
+            onError: (err) => console.error(err),
+            // Custom handler because we are returning JSON from a POST
+            onFinish: () => { },
         });
     };
+
+    // Re-implementing redeemCoupon to handle the JSON response manually since we're using a payment gateway
+    const initiatePayment = async (e) => {
+        e.preventDefault();
+
+        try {
+            const response = await fetch(route('coupons.redeem', selectedCoupon.id), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                },
+                body: JSON.stringify(data),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                handleRazorpayPayment(result.order, result.transaction_id);
+            } else {
+                alert(result.error || 'Something went wrong');
+            }
+        } catch (error) {
+            console.error('Payment initiation failed', error);
+        }
+    };
+
+    const handleRazorpayPayment = (order, transactionId) => {
+        const options = {
+            key: order.key,
+            amount: order.amount,
+            currency: order.currency,
+            name: "Kutoot",
+            description: `Payment for ${selectedCoupon.title}`,
+            order_id: order.id,
+            handler: function (response) {
+                router.post(route('coupons.verify-payment', transactionId), {
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_signature: response.razorpay_signature,
+                });
+            },
+            prefill: {
+                name: auth.user.name,
+                email: auth.user.email,
+            },
+            theme: {
+                color: "#4f46e5",
+            },
+        };
+
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+    };
+
+    const calculateBreakdown = () => {
+        const billAmount = parseFloat(data.amount) || 0;
+        let discount = 0;
+        if (selectedCoupon) {
+            if (selectedCoupon.discount_type === 'percentage') {
+                discount = (billAmount * selectedCoupon.discount_value) / 100;
+            } else {
+                discount = selectedCoupon.discount_value;
+            }
+        }
+        const finalBill = Math.max(0, billAmount - discount);
+        const fee = parseFloat(platform_fee);
+        // handle percentage fee if needed (frontend sync)
+        const feeAmount = platform_fee_type === 'percentage' ? (billAmount * fee / 100) : fee;
+        const gst = (feeAmount * gst_rate) / 100;
+        const total = finalBill + feeAmount + gst;
+
+        return { billAmount, discount, finalBill, feeAmount, gst, total };
+    };
+
+    const breakdown = calculateBreakdown();
+
 
     return (
         <AuthenticatedLayout
@@ -69,8 +172,9 @@ export default function Index({ auth, coupons, locations, planName }) {
                                             <div className="flex justify-between">
                                                 <span>Value:</span>
                                                 <span className="font-bold text-indigo-600">
-                                                    {coupon.discount_type === 'percentage' ? `${coupon.discount_value}% Off` : `$${coupon.discount_value} Off`}
+                                                    {coupon.discount_type === 'percentage' ? `${coupon.discount_value}% Off` : <><CurrencySymbol />{coupon.discount_value} Off</>}
                                                 </span>
+
                                             </div>
                                         </div>
                                     </div>
@@ -104,7 +208,7 @@ export default function Index({ auth, coupons, locations, planName }) {
             </div>
 
             <Modal show={confirmingRedemption} onClose={closeModal}>
-                <form onSubmit={redeemCoupon} className="p-6">
+                <form onSubmit={initiatePayment} className="p-6">
                     <h2 className="text-lg font-medium text-gray-900">
                         Redeem Coupon: {selectedCoupon?.title}
                     </h2>
@@ -136,7 +240,8 @@ export default function Index({ auth, coupons, locations, planName }) {
                     </div>
 
                     <div className="mt-6">
-                        <InputLabel htmlFor="amount" value="Bill Amount ($)" />
+                        <InputLabel htmlFor="amount" value={<span>Bill Amount (<CurrencySymbol />)</span>} />
+
 
                         <TextInput
                             id="amount"
@@ -152,12 +257,42 @@ export default function Index({ auth, coupons, locations, planName }) {
                         <InputError message={errors.amount} className="mt-2" />
                     </div>
 
+                    <div className="mt-6 bg-indigo-50 p-4 rounded-lg border border-indigo-100">
+                        <div className="flex justify-between text-sm text-indigo-900 mb-1">
+                            <span>Total Bill:</span>
+                            <span><CurrencySymbol />{breakdown.billAmount.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm text-indigo-900 mb-1">
+                            <span>Discount Applied:</span>
+                            <span className="text-green-600">- <CurrencySymbol />{breakdown.discount.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm font-semibold text-indigo-900 mb-1 pt-1 border-t border-indigo-100">
+                            <span>Bill after Discount:</span>
+                            <span><CurrencySymbol />{breakdown.finalBill.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm text-indigo-900 mb-1">
+                            <span>Platform Fee:</span>
+                            <span><CurrencySymbol />{breakdown.feeAmount.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm text-indigo-900 mb-2">
+                            <span>GST ({gst_rate}%):</span>
+                            <span><CurrencySymbol />{breakdown.gst.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between font-bold text-indigo-900 pt-2 border-t border-indigo-200">
+                            <span>Total to Pay:</span>
+                            <span><CurrencySymbol />{breakdown.total.toFixed(2)}</span>
+                        </div>
+                    </div>
+
                     <div className="mt-6 flex justify-end">
+
                         <SecondaryButton onClick={closeModal}>Cancel</SecondaryButton>
                         <PrimaryButton className="ms-3" disabled={processing}>
-                            Confirm Redemption
+                            Pay <CurrencySymbol />{breakdown.total.toFixed(2)} & Redeem
                         </PrimaryButton>
                     </div>
+
+
                 </form>
             </Modal>
         </AuthenticatedLayout>

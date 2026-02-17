@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Campaigns\Pages;
 
-use App\Filament\Resources\Campaigns\CampaignResource;
+use App\Filament\Resources\CampaignResource;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 

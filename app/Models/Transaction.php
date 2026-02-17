@@ -30,6 +30,9 @@ class Transaction extends Model
     {
         return [
             'amount' => 'decimal:2',
+            'platform_fee' => 'decimal:2',
+            'gst_amount' => 'decimal:2',
+            'total_amount' => 'decimal:2',
             'commission_amount' => 'decimal:2',
         ];
     }
@@ -40,6 +43,14 @@ class Transaction extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * @return BelongsTo<DiscountCoupon, $this>
+     */
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(DiscountCoupon::class);
     }
 
     /**

@@ -12,7 +12,7 @@ class TransactionPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasRole(['Super Admin', 'Merchant Admin']);
+        return $user->can('view-any-transaction');
     }
 
     /**
@@ -20,7 +20,7 @@ class TransactionPolicy
      */
     public function view(User $user, Transaction $transaction): bool
     {
-        return $user->hasRole(['Super Admin', 'Merchant Admin']);
+        return $user->can('view-transaction');
     }
 
     /**
@@ -28,7 +28,7 @@ class TransactionPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasRole(['Super Admin', 'Merchant Admin']);
+        return $user->can('create-transaction');
     }
 
     /**
@@ -36,7 +36,7 @@ class TransactionPolicy
      */
     public function update(User $user, Transaction $transaction): bool
     {
-        return $user->hasRole(['Super Admin', 'Merchant Admin']);
+        return $user->can('update-transaction');
     }
 
     /**
@@ -44,7 +44,7 @@ class TransactionPolicy
      */
     public function delete(User $user, Transaction $transaction): bool
     {
-        return false;
+        return $user->can('delete-transaction');
     }
 
     /**
@@ -52,7 +52,7 @@ class TransactionPolicy
      */
     public function restore(User $user, Transaction $transaction): bool
     {
-        return false;
+        return $user->can('restore-transaction');
     }
 
     /**
@@ -60,6 +60,6 @@ class TransactionPolicy
      */
     public function forceDelete(User $user, Transaction $transaction): bool
     {
-        return false;
+        return $user->can('force-delete-transaction');
     }
 }

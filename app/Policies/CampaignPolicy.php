@@ -12,7 +12,7 @@ class CampaignPolicy
      */
     public function viewAny(User $user): bool
     {
-        return true; // Filtered in controller
+        return $user->can('view-any-campaign');
     }
 
     /**
@@ -20,13 +20,7 @@ class CampaignPolicy
      */
     public function view(User $user, Campaign $campaign): bool
     {
-        if ($user->hasRole('Super Admin')) {
-            return true;
-        }
-
-        if ($user->hasRole('Merchant Admin')) {
-            // Can view if they created it or it belongs to their merchant location?
-            // Campaigns are created by users with 'Merchant Admin' role.
+        if ($user->can('view-campaign')) {
             return $campaign->creator_id === $user->id;
         }
 
@@ -40,7 +34,7 @@ class CampaignPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasPermissionTo('manage campaigns');
+        return $user->can('create-campaign');
     }
 
     /**
@@ -48,11 +42,7 @@ class CampaignPolicy
      */
     public function update(User $user, Campaign $campaign): bool
     {
-        if ($user->hasRole('Super Admin')) {
-            return true;
-        }
-
-        return $user->hasPermissionTo('manage campaigns') && $campaign->creator_id === $user->id;
+        return $user->can('update-campaign') && $campaign->creator_id === $user->id;
     }
 
     /**
@@ -68,7 +58,7 @@ class CampaignPolicy
      */
     public function restore(User $user, Campaign $campaign): bool
     {
-        return false;
+        return $user->can('restore-campaign');
     }
 
     /**
@@ -76,6 +66,6 @@ class CampaignPolicy
      */
     public function forceDelete(User $user, Campaign $campaign): bool
     {
-        return false;
+        return $user->can('force-delete-campaign');
     }
 }

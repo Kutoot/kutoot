@@ -38,6 +38,11 @@ class MerchantLocation extends Model
         return $this->hasMany(Transaction::class);
     }
 
+    public function qrCodes(): HasMany
+    {
+        return $this->hasMany(QrCode::class);
+    }
+
     /**
      * @return HasMany<DiscountCoupon, $this>
      */

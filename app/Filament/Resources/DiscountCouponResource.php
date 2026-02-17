@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\DiscountCoupons;
+namespace App\Filament\Resources;
 
 use App\Filament\Resources\DiscountCoupons\Pages\CreateDiscountCoupon;
 use App\Filament\Resources\DiscountCoupons\Pages\EditDiscountCoupon;
@@ -19,6 +19,8 @@ class DiscountCouponResource extends Resource
     protected static ?string $model = DiscountCoupon::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+
+    protected static string|\UnitEnum|null $navigationGroup = 'Promotion Management';
 
     public static function form(Schema $schema): Schema
     {

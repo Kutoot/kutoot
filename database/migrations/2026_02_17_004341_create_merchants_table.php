@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::create('merchants', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('razorpay_account_id')->nullable();
             $table->string('slug')->unique();
             $table->string('logo')->nullable();
             $table->boolean('is_active')->default(true);

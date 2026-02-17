@@ -12,7 +12,7 @@ class DiscountCouponPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasRole(['Super Admin', 'Merchant Admin']);
+        return $user->can('view-any-discount-coupon');
     }
 
     /**
@@ -20,7 +20,7 @@ class DiscountCouponPolicy
      */
     public function view(User $user, DiscountCoupon $discountCoupon): bool
     {
-        return $user->hasRole(['Super Admin', 'Merchant Admin']);
+        return $user->can('view-discount-coupon');
     }
 
     /**
@@ -28,7 +28,7 @@ class DiscountCouponPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasRole(['Super Admin', 'Merchant Admin']);
+        return $user->can('create-discount-coupon');
     }
 
     /**
@@ -36,7 +36,7 @@ class DiscountCouponPolicy
      */
     public function update(User $user, DiscountCoupon $discountCoupon): bool
     {
-        return $user->hasRole(['Super Admin', 'Merchant Admin']);
+        return $user->can('update-discount-coupon');
     }
 
     /**
@@ -44,7 +44,7 @@ class DiscountCouponPolicy
      */
     public function delete(User $user, DiscountCoupon $discountCoupon): bool
     {
-        return false;
+        return $user->can('delete-discount-coupon');
     }
 
     /**
@@ -52,7 +52,7 @@ class DiscountCouponPolicy
      */
     public function restore(User $user, DiscountCoupon $discountCoupon): bool
     {
-        return false;
+        return $user->can('restore-discount-coupon');
     }
 
     /**
@@ -60,6 +60,6 @@ class DiscountCouponPolicy
      */
     public function forceDelete(User $user, DiscountCoupon $discountCoupon): bool
     {
-        return false;
+        return $user->can('force-delete-discount-coupon');
     }
 }

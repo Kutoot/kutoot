@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\SubscriptionPlans;
+namespace App\Filament\Resources;
 
 use App\Filament\Resources\SubscriptionPlans\Pages\CreateSubscriptionPlan;
 use App\Filament\Resources\SubscriptionPlans\Pages\EditSubscriptionPlan;
@@ -21,6 +21,8 @@ class SubscriptionPlanResource extends Resource
     protected static bool $isScopedToTenant = false;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+
+    protected static string|\UnitEnum|null $navigationGroup = 'User Management';
 
     public static function form(Schema $schema): Schema
     {

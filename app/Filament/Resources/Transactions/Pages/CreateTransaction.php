@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Transactions\Pages;
 
-use App\Filament\Resources\Transactions\TransactionResource;
+use App\Filament\Resources\TransactionResource;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateTransaction extends CreateRecord
