@@ -11,17 +11,18 @@ class SubscriptionPlanForm
     {
         return $schema
             ->components([
-                TextInput::make('name')
-                    ->required(),
-                TextInput::make('max_discounted_bills')
-                    ->required()
-                    ->numeric(),
-                TextInput::make('max_redeemable_amount')
-                    ->required()
-                    ->numeric(),
-                TextInput::make('max_concurrent_campaigns_per_bill')
-                    ->required()
-                    ->numeric(),
-            ]);
+            TextInput::make('name')
+            ->required(),
+            TextInput::make('max_discounted_bills')
+            ->required()
+            ->numeric(),
+            TextInput::make('max_redeemable_amount')
+            ->required()
+            ->numeric(),
+            TextInput::make('max_concurrent_discount_coupons_per_bill')
+            ->label('Max Discount Coupons')
+            ->required()
+            ->numeric(),
+        ]);
     }
 }

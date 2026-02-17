@@ -13,8 +13,8 @@
     "mcp": true,
     "packages": [
         "filament/filament",
-        "spatie/laravel-permission",
-        "nativephp/mobile"
+        "nativephp/mobile",
+        "spatie/laravel-permission"
     ],
     "sail": false,
     "skills": [

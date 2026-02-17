@@ -32,7 +32,7 @@ export default function Index({ auth, plans, currentSubscription }) {
                                     </p>
 
                                     <p className="text-gray-600 mb-6">
-                                        Concurrent Campaigns: {plan.max_concurrent_campaigns_per_bill}
+                                        Max Discount Coupons: {plan.max_concurrent_discount_coupons_per_bill}
                                     </p>
 
                                     {currentSubscription?.plan_id === plan.id ? (

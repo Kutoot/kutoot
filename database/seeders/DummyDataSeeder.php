@@ -27,14 +27,14 @@ class DummyDataSeeder extends Seeder
             'name' => 'Gold Member',
             'max_discounted_bills' => 50,
             'max_redeemable_amount' => 5000,
-            'max_concurrent_campaigns_per_bill' => 3,
+            'max_concurrent_discount_coupons_per_bill' => 3,
         ]);
 
         $silverPlan = SubscriptionPlan::create([
             'name' => 'Silver Member',
             'max_discounted_bills' => 10,
             'max_redeemable_amount' => 1000,
-            'max_concurrent_campaigns_per_bill' => 1,
+            'max_concurrent_discount_coupons_per_bill' => 1,
         ]);
 
         // 2. Create Users

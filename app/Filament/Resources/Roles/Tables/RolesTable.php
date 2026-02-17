@@ -2,13 +2,11 @@
 
 namespace App\Filament\Resources\Roles\Tables;
 
-use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Support\Facades\Artisan;
 
 class RolesTable
 {
@@ -17,7 +15,27 @@ class RolesTable
         return $table
             ->columns([
                 TextColumn::make('name')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('guard_name')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'web' => 'primary',
+                        'api' => 'warning',
+                        default => 'gray',
+                    }),
+                TextColumn::make('permissions_count')
+                    ->counts('permissions')
+                    ->label('Permissions')
+                    ->sortable(),
+                TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('updated_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 //

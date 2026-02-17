@@ -43,14 +43,6 @@ This project has domain-specific skills available. You MUST activate the relevan
 - Use descriptive names for variables and methods. For example, `isRegisteredForDiscounts`, not `discount()`.
 - Check for existing components to reuse before writing a new one.
 
-## PHP
-### Seeders
-- **String Literals**: Always use regular strings for descriptions. Do not include JSX-style tags or React components (e.g., `<CurrencySymbol />`) within PHP seeder files. Use proper symbols like `₹`.
-
-## Filament
-### Resource Type Hints
-- **Navigation Groups**: Always use the correct type hint for `$navigationGroup` to match the base class: `protected static string|\UnitEnum|null $navigationGroup = '...';`.
-
 ## Verification Scripts
 
 - Do not create verification scripts or tinker when tests cover that functionality and prove they work. Unit and feature tests are more important.

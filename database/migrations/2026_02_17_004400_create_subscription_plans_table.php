@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
+return new class extends Migration 
 {
     public function up(): void
     {
@@ -13,7 +13,7 @@ return new class extends Migration
             $table->string('name');
             $table->integer('max_discounted_bills');
             $table->decimal('max_redeemable_amount', 15, 2);
-            $table->integer('max_concurrent_campaigns_per_bill');
+            $table->integer('max_concurrent_discount_coupons_per_bill');
             $table->timestamps();
         });
     }
