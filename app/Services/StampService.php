@@ -15,7 +15,7 @@ class StampService
 {
     /**
      * Award stamps for a bill payment.
-     * Number of stamps = floor(bill amount / 100) * plan's stamps_per_100.
+     * Number of stamps = floor(original bill amount / 100) * plan's stamps_per_100.
      */
     public function awardStampsForBill(Transaction $transaction, ?int $campaignId = null): int
     {
@@ -29,7 +29,8 @@ class StampService
         $plan = $this->getUserPlan($user);
         $stampsPerUnit = $plan?->stamps_per_100 ?? 1;
 
-        $stampCount = (int) floor($transaction->amount / 100) * $stampsPerUnit;
+        $billAmount = (float) ($transaction->original_bill_amount ?: $transaction->amount);
+        $stampCount = (int) floor($billAmount / 100) * $stampsPerUnit;
 
         if ($stampCount <= 0) {
             return 0;
