@@ -21,9 +21,11 @@ class CampaignResource extends Resource
 
     protected static bool $isScopedToTenant = false;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedMegaphone;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Promotion Management';
+    protected static string|\UnitEnum|null $navigationGroup = 'Campaign & Rewards';
+
+    protected static ?int $navigationSort = 1;
 
     public static function form(Schema $schema): Schema
     {
@@ -38,7 +40,7 @@ class CampaignResource extends Resource
     public static function getRelations(): array
     {
         return [
-            StampsRelationManager::class ,
+            StampsRelationManager::class,
         ];
     }
 

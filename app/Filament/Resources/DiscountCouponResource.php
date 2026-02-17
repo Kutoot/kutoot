@@ -18,9 +18,13 @@ class DiscountCouponResource extends Resource
 {
     protected static ?string $model = DiscountCoupon::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static bool $isScopedToTenant = false;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Promotion Management';
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTicket;
+
+    protected static string|\UnitEnum|null $navigationGroup = 'Coupons & Discounts';
+
+    protected static ?int $navigationSort = 1;
 
     public static function form(Schema $schema): Schema
     {

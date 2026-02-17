@@ -17,6 +17,23 @@ class DiscountCoupon extends Model
     /** @use HasFactory<\Database\Factories\DiscountCouponFactory> */
     use HasFactory, LogsActivity;
 
+    protected $fillable = [
+        'coupon_category_id',
+        'merchant_location_id',
+        'title',
+        'description',
+        'discount_type',
+        'discount_value',
+        'min_order_value',
+        'max_discount_amount',
+        'code',
+        'usage_limit',
+        'usage_per_user',
+        'starts_at',
+        'expires_at',
+        'is_active',
+    ];
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
@@ -59,10 +76,21 @@ class DiscountCoupon extends Model
 
     /**
      * @return BelongsToMany<SubscriptionPlan, $this>
+     *
+     * Eligibility is determined through the coupon's category.
+     * A coupon is eligible for a plan if its category is linked to that plan.
      */
-    public function plans(): BelongsToMany
+    public function eligiblePlans(): BelongsToMany
     {
-        return $this->belongsToMany(SubscriptionPlan::class, 'plan_coupon_access', 'coupon_id', 'plan_id');
+        return $this->category?->subscriptionPlans() ?? $this->belongsToMany(SubscriptionPlan::class)->whereRaw('1 = 0');
+    }
+
+    /**
+     * Check if this coupon is eligible for a given plan.
+     */
+    public function isEligibleForPlan(int $planId): bool
+    {
+        return $this->category?->subscriptionPlans()->where('plan_id', $planId)->exists() ?? false;
     }
 
     /**
@@ -82,7 +110,7 @@ class DiscountCoupon extends Model
 
     public function scopeForPlan(Builder $query, int $planId): Builder
     {
-        return $query->whereHas('plans', fn (Builder $q) => $q->where('plan_id', $planId));
+        return $query->whereHas('category.subscriptionPlans', fn (Builder $q) => $q->where('subscription_plans.id', $planId));
     }
 
     public function getSourceAttribute(): string

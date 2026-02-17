@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\QrCodeStatus;
 use App\Models\MerchantLocation;
 use App\Models\QrCode;
 use Endroid\QrCode\Color\Color;
@@ -18,7 +19,7 @@ use Inertia\Inertia;
 
 class ExecutiveQrController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         return Inertia::render('Executive/LinkQr', [
             'locations' => MerchantLocation::with('merchant')->get()->map(fn ($loc) => [
@@ -37,15 +38,15 @@ class ExecutiveQrController extends Controller
 
         $qrCode = QrCode::where('unique_code', $validated['unique_code'])->firstOrFail();
 
-        if ($qrCode->status === 'linked') {
+        if ($qrCode->status === QrCodeStatus::Linked) {
             return back()->with('error', 'This QR code is already linked to another location.');
         }
 
         $qrCode->update([
             'merchant_location_id' => $validated['merchant_location_id'],
-            'status' => 'linked',
+            'status' => QrCodeStatus::Linked,
             'linked_at' => now(),
-            'linked_by' => auth()->id(),
+            'linked_by' => $request->user()->id,
         ]);
 
         return back()->with('success', 'QR Code successfully linked to '.$qrCode->merchantLocation->branch_name);
@@ -67,7 +68,7 @@ class ExecutiveQrController extends Controller
             QrCode::create([
                 'unique_code' => $prefix.$num,
                 'token' => Str::random(32),
-                'status' => 'available',
+                'status' => QrCodeStatus::Available,
             ]);
         }
 

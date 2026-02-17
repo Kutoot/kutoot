@@ -28,6 +28,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Subscriptions
     Route::get('/subscriptions', [\App\Http\Controllers\SubscriptionController::class, 'index'])->name('subscriptions.index');
     Route::post('/subscriptions/upgrade', [\App\Http\Controllers\SubscriptionController::class, 'upgrade'])->name('subscriptions.upgrade');
+    Route::post('/subscriptions/primary-campaign', [\App\Http\Controllers\SubscriptionController::class, 'setPrimaryCampaign'])->name('subscriptions.setPrimaryCampaign');
 });
 
 Route::middleware('auth')->group(function () {

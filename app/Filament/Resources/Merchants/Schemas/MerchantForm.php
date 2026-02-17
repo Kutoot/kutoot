@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Merchants\Schemas;
 
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
@@ -14,7 +15,14 @@ class MerchantForm
             ->components([
                 TextInput::make('name')
                     ->required(),
-                TextInput::make('logo'),
+                TextInput::make('slug')
+                    ->required()
+                    ->unique(ignoreRecord: true),
+                TextInput::make('razorpay_account_id')
+                    ->label('Razorpay Account ID'),
+                FileUpload::make('logo')
+                    ->image()
+                    ->directory('merchants/logos'),
                 Toggle::make('is_active')
                     ->required(),
             ]);

@@ -4,9 +4,11 @@ namespace App\Filament\Resources\Campaigns\Schemas;
 
 use App\Enums\CampaignStatus;
 use App\Enums\CreatorType;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 
@@ -24,9 +26,13 @@ class CampaignForm
                     ->required(),
                 Select::make('creator_id')
                     ->relationship('creator', 'name')
-                    ->required(),
+                    ->required()
+                    ->searchable()
+                    ->preload(),
                 TextInput::make('reward_name')
                     ->required(),
+                Textarea::make('description')
+                    ->columnSpanFull(),
                 Select::make('status')
                     ->options(CampaignStatus::class)
                     ->default('active')
@@ -48,6 +54,12 @@ class CampaignForm
                     ->numeric()
                     ->default(0),
                 DateTimePicker::make('winner_announcement_date'),
+                CheckboxList::make('plans')
+                    ->relationship('plans', 'name')
+                    ->label('Eligible Subscription Plans')
+                    ->helperText('Select which subscription plans can access this campaign.')
+                    ->bulkToggleable()
+                    ->columns(2),
             ]);
     }
 }

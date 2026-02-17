@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use App\Enums\QrCodeStatus;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class QrCode extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'unique_code',
         'token',
@@ -16,10 +20,16 @@ class QrCode extends Model
         'linked_by',
     ];
 
-    protected $casts = [
-        'linked_at' => 'datetime',
-        'status' => 'boolean',
-    ];
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'linked_at' => 'datetime',
+            'status' => QrCodeStatus::class,
+        ];
+    }
 
     public function merchantLocation(): BelongsTo
     {
@@ -28,7 +38,7 @@ class QrCode extends Model
 
     public function executive(): BelongsTo
     {
-        return $this->belongsTo(User::class , 'linked_by');
+        return $this->belongsTo(User::class, 'linked_by');
     }
 
     public function getUrlAttribute(): string

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\StampSource;
 use App\Models\Campaign;
 use App\Models\Stamp;
 use App\Models\Transaction;
@@ -20,6 +21,7 @@ class StampFactory extends Factory
             'campaign_id' => Campaign::factory(),
             'transaction_id' => Transaction::factory(),
             'code' => fake()->unique()->numerify('ST-########'),
+            'source' => fake()->randomElement(StampSource::cases()),
         ];
     }
 }

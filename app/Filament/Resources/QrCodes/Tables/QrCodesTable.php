@@ -24,8 +24,6 @@ class QrCodesTable
                     ->searchable(),
                 TextColumn::make('status')
                     ->badge()
-                    ->formatStateUsing(fn ($state) => $state ? 'Active' : 'Inactive')
-                    ->color(fn ($state) => $state ? 'success' : 'danger')
                     ->searchable(),
                 TextColumn::make('linked_at')
                     ->dateTime()

@@ -18,9 +18,13 @@ class UserSubscriptionResource extends Resource
 {
     protected static ?string $model = UserSubscription::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static bool $isScopedToTenant = false;
 
-    protected static string|\UnitEnum|null $navigationGroup = 'User Management';
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentCheck;
+
+    protected static string|\UnitEnum|null $navigationGroup = 'Subscriptions & Billing';
+
+    protected static ?int $navigationSort = 2;
 
     public static function form(Schema $schema): Schema
     {

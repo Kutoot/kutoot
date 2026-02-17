@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\CommissionEarned;
 use App\Models\DiscountCoupon;
 use App\Models\MerchantLocation;
 use App\Models\Transaction;
+use App\Services\CouponRedemptionService;
+use App\Services\Payments\PaymentManager;
+use App\Services\StampService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -12,14 +16,16 @@ use Inertia\Inertia;
 class CouponController extends Controller
 {
     public function __construct(
-        protected \App\Services\CouponRedemptionService $redemptionService,
-        protected \App\Services\Payments\PaymentManager $paymentManager
+        protected CouponRedemptionService $redemptionService,
+        protected PaymentManager $paymentManager,
+        protected StampService $stampService,
     ) {}
 
     public function index(Request $request)
     {
         $user = $request->user();
         $planId = $user?->activeSubscription?->plan_id;
+        $plan = $user?->activeSubscription?->plan;
 
         $coupons = DiscountCoupon::query()
             ->when($planId, fn ($q) => $q->forPlan($planId))
@@ -28,18 +34,26 @@ class CouponController extends Controller
             ->latest()
             ->paginate(9);
 
-        // Pass available locations for redemption dropdown
-        $locations = MerchantLocation::with('merchant')->get()->map(function ($loc) {
-            return [
-                'id' => $loc->id,
-                'name' => $loc->branch_name.' ('.$loc->merchant->name.')',
-            ];
-        });
+        $locations = MerchantLocation::with('merchant')->get()->map(fn ($loc) => [
+            'id' => $loc->id,
+            'name' => $loc->branch_name.' ('.$loc->merchant->name.')',
+        ]);
+
+        // Campaigns the user can choose from (based on their plan)
+        $availableCampaigns = $plan
+            ? $plan->campaigns()->where('status', 'active')->get(['campaigns.id', 'reward_name'])
+            : collect();
 
         return Inertia::render('Coupons/Index', [
             'coupons' => $coupons,
             'locations' => $locations,
-            'planName' => $user?->activeSubscription?->plan->name ?? 'Free Tier',
+            'planName' => $plan->name ?? 'Free Tier',
+            'stampsPerHundred' => $plan->stamps_per_100 ?? 0,
+            'primaryCampaign' => $user?->primaryCampaign ? [
+                'id' => $user->primaryCampaign->id,
+                'reward_name' => $user->primaryCampaign->reward_name,
+            ] : null,
+            'availableCampaigns' => $availableCampaigns,
             'isLoggedIn' => (bool) $user,
         ]);
     }
@@ -49,6 +63,7 @@ class CouponController extends Controller
         $validated = $request->validate([
             'merchant_location_id' => 'required|exists:merchant_locations,id',
             'amount' => 'required|numeric|min:0.01',
+            'campaign_id' => 'nullable|exists:campaigns,id',
         ]);
 
         $user = $request->user();
@@ -56,36 +71,46 @@ class CouponController extends Controller
             return redirect()->route('login')->with('error', 'You must be logged in to redeem a coupon.');
         }
 
+        // If user has no primary campaign and selected one, set it now
+        if (! $user->primary_campaign_id && ! empty($validated['campaign_id'])) {
+            $user->update(['primary_campaign_id' => $validated['campaign_id']]);
+            $user->refresh();
+        }
+
         $merchantLocation = MerchantLocation::with('merchant')->findOrFail($validated['merchant_location_id']);
         $amount = (float) $validated['amount'];
 
         try {
             return DB::transaction(function () use ($user, $coupon, $merchantLocation, $amount) {
-                // 1. Calculate Fees & GST
+                // 1. Calculate platform fees & GST
                 $platformFee = config('app.platform_fee', 10);
                 if (config('app.platform_fee_type') === 'percentage') {
                     $platformFee = ($amount * $platformFee) / 100;
                 }
-
                 $gstAmount = ($platformFee * config('app.gst_rate', 18)) / 100;
-                $totalAmount = $platformFee + $gstAmount; // User ONLY pays platform fee + GST to Kutoot?
-                // Wait, user bill is 'amount'. Final bill for user = amount (to merchant) + fee + gst (to kutoot).
-                // User pays total_amount = platform_fee + gst_amount + merchant_amount?
-                // The requirement says: "final bill after discont will go to merchant account and platform and gst will go to kutoot account"
 
-                // Calculate discount if applicable here to get 'final bill after discount'
+                // 2. Calculate discount
                 $discountAmount = 0.0;
                 if ($coupon->discount_type === \App\Enums\DiscountType::Fixed) {
-                    $discountAmount = $coupon->discount_value;
+                    $discountAmount = (float) $coupon->discount_value;
                 } else {
-                    $discountAmount = ($amount * $coupon->discount_value) / 100;
+                    $discountAmount = ($amount * (float) $coupon->discount_value) / 100;
                 }
+
+                if ($coupon->max_discount_amount) {
+                    $discountAmount = min($discountAmount, (float) $coupon->max_discount_amount);
+                }
+
                 $finalBillAfterDiscount = max(0, $amount - $discountAmount);
                 $grandTotal = $finalBillAfterDiscount + $platformFee + $gstAmount;
 
-                // 2. Create Transaction
+                // 3. Calculate commission for the merchant location
+                $commissionAmount = ($finalBillAfterDiscount * $merchantLocation->commission_percentage) / 100;
+
+                // 4. Create Transaction
                 $transaction = Transaction::create([
                     'user_id' => $user->id,
+                    'coupon_id' => $coupon->id,
                     'merchant_location_id' => $merchantLocation->id,
                     'amount' => $finalBillAfterDiscount,
                     'platform_fee' => $platformFee,
@@ -93,11 +118,11 @@ class CouponController extends Controller
                     'total_amount' => $grandTotal,
                     'payment_gateway' => $this->paymentManager->getDefaultDriver(),
                     'payment_status' => 'pending',
+                    'commission_amount' => $commissionAmount,
                 ]);
 
-                // 3. Initiate Payment Order
+                // 5. Initiate payment order
                 $order = $this->paymentManager->driver()->createOrder($transaction);
-
                 $transaction->update(['payment_id' => $order['id']]);
 
                 return response()->json([
@@ -118,11 +143,26 @@ class CouponController extends Controller
             DB::transaction(function () use ($transaction) {
                 $transaction->update(['payment_status' => 'paid']);
 
-                // Complete redemption
-                $coupon = DiscountCoupon::active()->latest()->first(); // We should ideally pass coupon_id in session/transaction
-                // Actually, let's look for the coupon in the redemption service.
-                // It's cleaner if the transaction has a temporary relation or we find the coupon another way.
-                // For now, let's assume we need to update the redemption service to work with transactions already created.
+                $user = $transaction->user;
+
+                // Complete coupon redemption using the coupon linked to this transaction
+                if ($transaction->coupon_id) {
+                    $coupon = DiscountCoupon::find($transaction->coupon_id);
+                    if ($coupon) {
+                        $this->redemptionService->redeemCoupon($user, $coupon, $transaction);
+                    }
+                }
+
+                // Award stamps based on bill amount
+                $this->stampService->awardStampsForBill($transaction);
+
+                // Dispatch commission earned event for bounty tracking
+                if ($transaction->commission_amount > 0 && $user->primary_campaign_id) {
+                    $campaign = $user->primaryCampaign;
+                    if ($campaign) {
+                        CommissionEarned::dispatch($campaign, (float) $transaction->commission_amount);
+                    }
+                }
             });
 
             return redirect()->route('coupons.index')->with('success', 'Payment successful and coupon redeemed!');

@@ -22,9 +22,13 @@ class UserResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static bool $isScopedToTenant = false;
+
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUsers;
 
     protected static string|\UnitEnum|null $navigationGroup = 'User Management';
+
+    protected static ?int $navigationSort = 1;
 
     public static function form(Schema $schema): Schema
     {
@@ -39,10 +43,10 @@ class UserResource extends Resource
     public static function getRelations(): array
     {
         return [
-            TransactionsRelationManager::class ,
-            SubscriptionsRelationManager::class ,
-            StampsRelationManager::class ,
-            CouponRedemptionsRelationManager::class ,
+            TransactionsRelationManager::class,
+            SubscriptionsRelationManager::class,
+            StampsRelationManager::class,
+            CouponRedemptionsRelationManager::class,
         ];
     }
 

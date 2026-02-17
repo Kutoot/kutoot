@@ -19,25 +19,45 @@ class CampaignController extends Controller
         $campaigns = Campaign::query()
             ->when($planId, fn ($q) => $q->forPlan($planId))
             ->active()
-            ->with(['category', 'creator'])
+            ->with(['category', 'creator.merchantLocations.merchant'])
             ->latest()
             ->paginate(9);
 
+        // Transform to include merchant info the frontend expects
+        $campaigns->through(function (Campaign $campaign) {
+            $merchant = $campaign->creator?->merchant;
+            $data = $campaign->toArray();
+            $data['creator'] = array_merge($campaign->creator?->toArray() ?? [], [
+                'merchant' => $merchant ? [
+                    'name' => $merchant->name,
+                    'logo' => $merchant->logo,
+                ] : null,
+            ]);
+
+            return $data;
+        });
+
         return Inertia::render('Campaigns/Index', [
             'campaigns' => $campaigns,
-            'canLogin' => true,
-            'canRegister' => true,
         ]);
     }
 
     public function show(Campaign $campaign)
     {
-        $campaign->load(['category', 'stamps']);
+        $campaign->load(['category', 'stamps', 'creator.merchantLocations.merchant']);
 
+        $merchant = $campaign->creator?->merchant;
         $bountyMeter = $this->bountyService->recalculateBountyMeter($campaign);
 
         return Inertia::render('Campaigns/Show', [
-            'campaign' => $campaign,
+            'campaign' => array_merge($campaign->toArray(), [
+                'creator' => array_merge($campaign->creator?->toArray() ?? [], [
+                    'merchant' => $merchant ? [
+                        'name' => $merchant->name,
+                        'logo' => $merchant->logo,
+                    ] : null,
+                ]),
+            ]),
             'bountyMeter' => $bountyMeter,
             'collectedCommission' => $campaign->collected_commission_cache,
             'issuedStamps' => $campaign->issued_stamps_cache,

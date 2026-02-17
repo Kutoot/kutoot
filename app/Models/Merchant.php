@@ -13,6 +13,24 @@ class Merchant extends Model
     /** @use HasFactory<\Database\Factories\MerchantFactory> */
     use HasFactory, LogsActivity;
 
+    protected $fillable = [
+        'name',
+        'razorpay_account_id',
+        'slug',
+        'logo',
+        'is_active',
+    ];
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'is_active' => 'boolean',
+        ];
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

@@ -19,9 +19,13 @@ class MerchantLocationResource extends Resource
 {
     protected static ?string $model = MerchantLocation::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static bool $isScopedToTenant = false;
+
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedMapPin;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Merchant Management';
+
+    protected static ?int $navigationSort = 2;
 
     public static function form(Schema $schema): Schema
     {
@@ -36,7 +40,7 @@ class MerchantLocationResource extends Resource
     public static function getRelations(): array
     {
         return [
-            QrCodesRelationManager::class ,
+            QrCodesRelationManager::class,
         ];
     }
 

@@ -150,6 +150,16 @@ class User extends Authenticatable implements FilamentUser, HasTenants
         return $this->belongsToMany(MerchantLocation::class, 'merchant_location_user');
     }
 
+    /**
+     * Get the merchant associated with this user (via their first merchant location).
+     */
+    public function getMerchantAttribute(): ?Merchant
+    {
+        $location = $this->merchantLocations->first();
+
+        return $location?->merchant;
+    }
+
     public function canAccessPanel(Panel $panel): bool
     {
         if ($panel->getId() === 'admin') {

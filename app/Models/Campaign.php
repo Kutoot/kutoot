@@ -23,6 +23,7 @@ class Campaign extends Model
         'creator_id',
         'creator_type',
         'reward_name',
+        'description',
         'status',
         'start_date',
         'reward_cost_target',

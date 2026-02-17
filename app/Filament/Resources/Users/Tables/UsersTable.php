@@ -22,8 +22,12 @@ class UsersTable
                 TextColumn::make('email_verified_at')
                     ->dateTime()
                     ->sortable(),
-                TextColumn::make('primaryCampaign.id')
+                TextColumn::make('primaryCampaign.reward_name')
+                    ->label('Primary Campaign')
                     ->searchable(),
+                TextColumn::make('roles.name')
+                    ->badge()
+                    ->label('Roles'),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

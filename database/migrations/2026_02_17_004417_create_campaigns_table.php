@@ -14,6 +14,7 @@ return new class extends Migration
             $table->string('creator_type');
             $table->foreignId('creator_id')->constrained('users')->cascadeOnDelete();
             $table->string('reward_name');
+            $table->text('description')->nullable();
             $table->string('status')->default('active');
             $table->date('start_date');
             $table->decimal('reward_cost_target', 15, 2);

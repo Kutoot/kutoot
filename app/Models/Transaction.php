@@ -15,6 +15,20 @@ class Transaction extends Model
     /** @use HasFactory<\Database\Factories\TransactionFactory> */
     use HasFactory, LogsActivity;
 
+    protected $fillable = [
+        'user_id',
+        'coupon_id',
+        'merchant_location_id',
+        'amount',
+        'platform_fee',
+        'gst_amount',
+        'total_amount',
+        'payment_gateway',
+        'payment_id',
+        'payment_status',
+        'commission_amount',
+    ];
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

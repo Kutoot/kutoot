@@ -22,20 +22,48 @@ class DummyDataSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Create Subscription Plans
-        $goldPlan = SubscriptionPlan::create([
-            'name' => 'Gold Member',
-            'max_discounted_bills' => 50,
-            'max_redeemable_amount' => 5000,
-            'max_concurrent_discount_coupons_per_bill' => 3,
+        // 1. Create 5 Subscription Plans
+        $bronzePlan = SubscriptionPlan::create([
+            'name' => 'Bronze',
+            'stamps_on_purchase' => 2,
+            'stamps_per_100' => 1,
+            'max_discounted_bills' => 5,
+            'max_redeemable_amount' => 500,
         ]);
 
         $silverPlan = SubscriptionPlan::create([
-            'name' => 'Silver Member',
-            'max_discounted_bills' => 10,
-            'max_redeemable_amount' => 1000,
-            'max_concurrent_discount_coupons_per_bill' => 1,
+            'name' => 'Silver',
+            'stamps_on_purchase' => 5,
+            'stamps_per_100' => 2,
+            'max_discounted_bills' => 15,
+            'max_redeemable_amount' => 1500,
         ]);
+
+        $goldPlan = SubscriptionPlan::create([
+            'name' => 'Gold',
+            'stamps_on_purchase' => 10,
+            'stamps_per_100' => 3,
+            'max_discounted_bills' => 30,
+            'max_redeemable_amount' => 3000,
+        ]);
+
+        $platinumPlan = SubscriptionPlan::create([
+            'name' => 'Platinum',
+            'stamps_on_purchase' => 15,
+            'stamps_per_100' => 5,
+            'max_discounted_bills' => 50,
+            'max_redeemable_amount' => 5000,
+        ]);
+
+        $diamondPlan = SubscriptionPlan::create([
+            'name' => 'Diamond',
+            'stamps_on_purchase' => 25,
+            'stamps_per_100' => 8,
+            'max_discounted_bills' => 100,
+            'max_redeemable_amount' => 10000,
+        ]);
+
+        $allPlans = [$bronzePlan, $silverPlan, $goldPlan, $platinumPlan, $diamondPlan];
 
         // 2. Create Users
         $user = User::factory()->create([
@@ -67,6 +95,13 @@ class DummyDataSeeder extends Seeder
             'is_active' => true,
         ]);
 
+        $coffeeBrew = Merchant::create([
+            'name' => 'Coffee Brew',
+            'slug' => 'coffee-brew',
+            'logo' => 'https://placehold.co/400x400/8B4513/ffffff?text=Coffee+Brew',
+            'is_active' => true,
+        ]);
+
         // 4. Create Locations
         $pizzaDowntown = MerchantLocation::create([
             'merchant_id' => $pizzaHut->id,
@@ -78,6 +113,12 @@ class DummyDataSeeder extends Seeder
             'merchant_id' => $bananaStore->id,
             'branch_name' => 'Mega Mall',
             'commission_percentage' => 8.0,
+        ]);
+
+        $coffeeStation = MerchantLocation::create([
+            'merchant_id' => $coffeeBrew->id,
+            'branch_name' => 'Central Station',
+            'commission_percentage' => 6.0,
         ]);
 
         // Assign Merchant Admin role to a new user for Pizza Hut
@@ -92,25 +133,36 @@ class DummyDataSeeder extends Seeder
         // 5. Create Categories
         $foodCat = CampaignCategory::create(['name' => 'Food & Dining', 'slug' => 'food-dining']);
         $retailCat = CampaignCategory::create(['name' => 'Retail', 'slug' => 'retail']);
+        $beverageCat = CampaignCategory::create(['name' => 'Beverages', 'slug' => 'beverages']);
 
         $couponCatFood = CouponCategory::create(['name' => 'Food', 'slug' => 'food', 'is_active' => true]);
+        $couponCatBeverage = CouponCategory::create(['name' => 'Beverages', 'slug' => 'beverages', 'is_active' => true]);
 
-        // 6. Create Campaigns
-        $campaign = Campaign::create([
-            'category_id' => $foodCat->id,
-            'creator_type' => CreatorType::Admin,
-            'creator_id' => $merchantUser->id,
-            'reward_name' => 'Free Large Pizza',
-            'status' => CampaignStatus::Active,
-            'start_date' => now()->subDays(5),
-            'reward_cost_target' => 500.00,
-            'stamp_target' => 10,
-            'collected_commission_cache' => 150.00,
-            'issued_stamps_cache' => 3,
-        ]);
+        // 6. Create one Campaign per Plan
+        $campaignData = [
+            [$bronzePlan, 'Free Snack Box', $foodCat, 200.00, 5, $pizzaDowntown],
+            [$silverPlan, 'Free Medium Pizza', $foodCat, 400.00, 8, $pizzaDowntown],
+            [$goldPlan, 'Free Large Pizza', $foodCat, 500.00, 10, $pizzaDowntown],
+            [$platinumPlan, 'Free Banana Hamper', $retailCat, 800.00, 12, $bananaMall],
+            [$diamondPlan, 'Free Coffee Month Pass', $beverageCat, 1200.00, 15, $coffeeStation],
+        ];
 
-        // Link campaign to Gold Plan
-        $campaign->plans()->attach($goldPlan);
+        foreach ($campaignData as [$plan, $rewardName, $category, $costTarget, $stampTarget, $location]) {
+            $campaign = Campaign::create([
+                'category_id' => $category->id,
+                'creator_type' => CreatorType::Admin,
+                'creator_id' => $merchantUser->id,
+                'reward_name' => $rewardName,
+                'description' => "Earn {$stampTarget} stamps to win: {$rewardName}",
+                'status' => CampaignStatus::Active,
+                'start_date' => now()->subDays(rand(1, 30)),
+                'reward_cost_target' => $costTarget,
+                'stamp_target' => $stampTarget,
+                'collected_commission_cache' => 0,
+                'issued_stamps_cache' => 0,
+            ]);
+            $campaign->plans()->attach($plan);
+        }
 
         // 7. Create Coupons
         $pizzaCoupon = DiscountCoupon::create([
@@ -128,21 +180,36 @@ class DummyDataSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        $pizzaCoupon->plans()->attach($goldPlan); // Only for Gold members
+        // Link coupon categories to plans (eligibility goes through categories)
+        $couponCatFood->subscriptionPlans()->attach(collect($allPlans)->pluck('id'));
+        $couponCatBeverage->subscriptionPlans()->attach([$goldPlan->id, $platinumPlan->id, $diamondPlan->id]);
 
         $bananaCoupon = DiscountCoupon::create([
             'coupon_category_id' => $couponCatFood->id,
-            'merchant_location_id' => $bananaMall->id, // Nano Banana Store
+            'merchant_location_id' => $bananaMall->id,
             'title' => 'Free Nano Banana',
             'description' => 'One free Nano Banana with every purchase over ₹10.',
             'discount_type' => DiscountType::Fixed,
-            'discount_value' => 5, // Value of a banana?
+            'discount_value' => 5,
             'min_order_value' => 10,
             'code' => 'BANANA1',
             'starts_at' => now(),
             'is_active' => true,
         ]);
 
-        $bananaCoupon->plans()->attach([$goldPlan->id, $silverPlan->id]);
+        $coffeeCoupon = DiscountCoupon::create([
+            'coupon_category_id' => $couponCatBeverage->id,
+            'merchant_location_id' => $coffeeStation->id,
+            'title' => '30% Off Coffee',
+            'description' => 'Get 30% off any coffee at Central Station.',
+            'discount_type' => DiscountType::Percentage,
+            'discount_value' => 30,
+            'min_order_value' => 50,
+            'max_discount_amount' => 100,
+            'code' => 'COFFEE30',
+            'usage_limit' => 200,
+            'starts_at' => now(),
+            'is_active' => true,
+        ]);
     }
 }

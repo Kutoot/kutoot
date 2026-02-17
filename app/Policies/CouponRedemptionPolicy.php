@@ -20,7 +20,8 @@ class CouponRedemptionPolicy
      */
     public function view(User $user, CouponRedemption $couponRedemption): bool
     {
-        return $user->can('view-coupon-redemption') && $user->merchantLocations->contains($couponRedemption->merchant_location_id);
+        return $user->can('view-coupon-redemption')
+            && $user->merchantLocations->contains($couponRedemption->coupon?->merchant_location_id);
     }
 
     /**

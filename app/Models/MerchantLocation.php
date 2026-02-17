@@ -14,6 +14,24 @@ class MerchantLocation extends Model
     /** @use HasFactory<\Database\Factories\MerchantLocationFactory> */
     use HasFactory, LogsActivity;
 
+    protected $fillable = [
+        'merchant_id',
+        'branch_name',
+        'commission_percentage',
+        'is_active',
+    ];
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'commission_percentage' => 'decimal:2',
+            'is_active' => 'boolean',
+        ];
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

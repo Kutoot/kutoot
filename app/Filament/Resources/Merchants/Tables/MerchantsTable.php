@@ -17,8 +17,15 @@ class MerchantsTable
             ->columns([
                 TextColumn::make('name')
                     ->searchable(),
-                TextColumn::make('logo')
+                TextColumn::make('slug')
                     ->searchable(),
+                TextColumn::make('locations_count')
+                    ->counts('locations')
+                    ->label('Locations')
+                    ->sortable(),
+                TextColumn::make('logo')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 IconColumn::make('is_active')
                     ->boolean(),
                 TextColumn::make('created_at')

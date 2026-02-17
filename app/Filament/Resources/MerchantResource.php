@@ -21,9 +21,11 @@ class MerchantResource extends Resource
 
     protected static bool $isScopedToTenant = false;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingStorefront;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Merchant Management';
+
+    protected static ?int $navigationSort = 1;
 
     public static function form(Schema $schema): Schema
     {
@@ -38,7 +40,7 @@ class MerchantResource extends Resource
     public static function getRelations(): array
     {
         return [
-            LocationsRelationManager::class ,
+            LocationsRelationManager::class,
         ];
     }
 

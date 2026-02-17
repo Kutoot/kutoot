@@ -2,15 +2,13 @@
 
 namespace App\Filament\Resources\Users\RelationManagers;
 
-use Filament\Actions\AssociateAction;
+use App\Enums\SubscriptionStatus;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\DissociateAction;
-use Filament\Actions\DissociateBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
@@ -24,35 +22,42 @@ class SubscriptionsRelationManager extends RelationManager
     {
         return $schema
             ->components([
-                TextInput::make('id')
-                    ->required()
-                    ->maxLength(255),
+                Select::make('plan_id')
+                    ->relationship('plan', 'name')
+                    ->required(),
+                Select::make('status')
+                    ->options(SubscriptionStatus::class)
+                    ->default('active')
+                    ->required(),
             ]);
     }
 
     public function table(Table $table): Table
     {
         return $table
-            ->recordTitleAttribute('id')
+            ->recordTitleAttribute('plan.name')
             ->columns([
-                TextColumn::make('id')
+                TextColumn::make('plan.name')
+                    ->label('Plan')
                     ->searchable(),
+                TextColumn::make('status')
+                    ->badge(),
+                TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable(),
             ])
             ->filters([
                 //
             ])
             ->headerActions([
                 CreateAction::make(),
-                AssociateAction::make(),
             ])
             ->recordActions([
                 EditAction::make(),
-                DissociateAction::make(),
                 DeleteAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DissociateBulkAction::make(),
                     DeleteBulkAction::make(),
                 ]),
             ]);

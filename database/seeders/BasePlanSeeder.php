@@ -10,13 +10,14 @@ class BasePlanSeeder extends Seeder
     public function run(): void
     {
         SubscriptionPlan::updateOrCreate(
-        ['name' => 'Base Plan'],
-        [
-            'max_discounted_bills' => 5,
-            'max_redeemable_amount' => 500,
-            'max_concurrent_discount_coupons_per_bill' => 1,
-            'is_default' => true,
-        ]
+            ['name' => 'Base Plan'],
+            [
+                'stamps_on_purchase' => 0,
+                'stamps_per_100' => 1,
+                'max_discounted_bills' => 5,
+                'max_redeemable_amount' => 500,
+                'is_default' => true,
+            ]
         );
     }
 }

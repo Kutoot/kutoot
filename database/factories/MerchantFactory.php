@@ -18,7 +18,9 @@ class MerchantFactory extends Factory
     {
         return [
             'name' => $this->faker->company(),
+            'slug' => $this->faker->unique()->slug(2),
             'logo' => $this->faker->imageUrl(),
+            'razorpay_account_id' => 'acc_'.$this->faker->unique()->bothify('??????????????'),
             'is_active' => true,
         ];
     }

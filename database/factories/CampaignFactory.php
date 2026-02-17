@@ -25,6 +25,7 @@ class CampaignFactory extends Factory
             'creator_type' => CreatorType::Merchant,
             'category_id' => CampaignCategory::factory(),
             'reward_name' => $this->faker->words(3, true),
+            'description' => $this->faker->sentence(),
             'status' => CampaignStatus::Active,
             'start_date' => now(),
             'reward_cost_target' => 1000.00,

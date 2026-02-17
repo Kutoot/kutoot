@@ -11,7 +11,7 @@ import CurrencySymbol from '@/Components/CurrencySymbol';
 import { usePage } from '@inertiajs/react';
 
 
-export default function Index({ auth, coupons, locations, planName }) {
+export default function Index({ auth, coupons, locations, planName, stampsPerHundred, primaryCampaign, availableCampaigns }) {
     const { platform_fee, gst_rate, platform_fee_type } = usePage().props;
 
     const [confirmingRedemption, setConfirmingRedemption] = useState(false);
@@ -20,6 +20,7 @@ export default function Index({ auth, coupons, locations, planName }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         merchant_location_id: '',
         amount: '',
+        campaign_id: primaryCampaign?.id || '',
     });
 
     useEffect(() => {
@@ -46,6 +47,7 @@ export default function Index({ auth, coupons, locations, planName }) {
 
     const closeModal = () => {
         setConfirmingRedemption(false);
+        setSelectedCoupon(null);
         reset();
     };
 
@@ -71,25 +73,32 @@ export default function Index({ auth, coupons, locations, planName }) {
     const initiatePayment = async (e) => {
         e.preventDefault();
 
+        const couponId = selectedCoupon?.id;
+        const formData = { ...data };
+
+        if (!couponId) return;
+
         try {
-            const response = await fetch(route('coupons.redeem', selectedCoupon.id), {
+            const response = await fetch(route('coupons.redeem', couponId), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                 },
-                body: JSON.stringify(data),
+                body: JSON.stringify(formData),
             });
 
             const result = await response.json();
 
             if (response.ok) {
+                closeModal();
                 handleRazorpayPayment(result.order, result.transaction_id);
             } else {
                 alert(result.error || 'Something went wrong');
             }
         } catch (error) {
             console.error('Payment initiation failed', error);
+            alert('Payment initiation failed. Please try again.');
         }
     };
 
@@ -126,9 +135,12 @@ export default function Index({ auth, coupons, locations, planName }) {
         let discount = 0;
         if (selectedCoupon) {
             if (selectedCoupon.discount_type === 'percentage') {
-                discount = (billAmount * selectedCoupon.discount_value) / 100;
+                discount = (billAmount * parseFloat(selectedCoupon.discount_value)) / 100;
             } else {
-                discount = selectedCoupon.discount_value;
+                discount = parseFloat(selectedCoupon.discount_value) || 0;
+            }
+            if (selectedCoupon.max_discount_amount) {
+                discount = Math.min(discount, parseFloat(selectedCoupon.max_discount_amount));
             }
         }
         const finalBill = Math.max(0, billAmount - discount);
@@ -137,8 +149,9 @@ export default function Index({ auth, coupons, locations, planName }) {
         const feeAmount = platform_fee_type === 'percentage' ? (billAmount * fee / 100) : fee;
         const gst = (feeAmount * gst_rate) / 100;
         const total = finalBill + feeAmount + gst;
+        const estimatedStamps = Math.floor(billAmount / 100) * stampsPerHundred;
 
-        return { billAmount, discount, finalBill, feeAmount, gst, total };
+        return { billAmount, discount, finalBill, feeAmount, gst, total, estimatedStamps };
     };
 
     const breakdown = calculateBreakdown();
@@ -283,6 +296,56 @@ export default function Index({ auth, coupons, locations, planName }) {
                             <span><CurrencySymbol />{breakdown.total.toFixed(2)}</span>
                         </div>
                     </div>
+
+                    {/* Stamps Earned Preview */}
+                    {breakdown.estimatedStamps > 0 && (
+                        <div className="mt-4 bg-green-50 p-3 rounded-lg border border-green-200 flex items-center gap-3">
+                            <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                <span className="text-green-700 font-bold text-lg">{breakdown.estimatedStamps}</span>
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-green-800">
+                                    You'll earn {breakdown.estimatedStamps} stamp{breakdown.estimatedStamps !== 1 ? 's' : ''}
+                                </p>
+                                <p className="text-xs text-green-600">
+                                    {stampsPerHundred} stamp{stampsPerHundred !== 1 ? 's' : ''} per <CurrencySymbol />100 bill
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Primary Campaign Note / Selector */}
+                    {primaryCampaign ? (
+                        <div className="mt-4 bg-amber-50 p-3 rounded-lg border border-amber-200">
+                            <p className="text-sm text-amber-800">
+                                <span className="font-semibold">Stamps will be added to:</span>{' '}
+                                {primaryCampaign.reward_name}
+                            </p>
+                        </div>
+                    ) : availableCampaigns?.length > 0 ? (
+                        <div className="mt-4">
+                            <InputLabel htmlFor="campaign_id" value="Select Campaign for Stamps" />
+                            <select
+                                id="campaign_id"
+                                name="campaign_id"
+                                value={data.campaign_id}
+                                onChange={(e) => setData('campaign_id', e.target.value)}
+                                className="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                required
+                            >
+                                <option value="">Choose a campaign</option>
+                                {availableCampaigns.map((c) => (
+                                    <option key={c.id} value={c.id}>
+                                        {c.reward_name}
+                                    </option>
+                                ))}
+                            </select>
+                            <p className="mt-1 text-xs text-gray-500">
+                                No primary campaign set. Select which campaign should receive your stamps.
+                            </p>
+                            <InputError message={errors.campaign_id} className="mt-1" />
+                        </div>
+                    ) : null}
 
                     <div className="mt-6 flex justify-end">
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\StampSource;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,12 +14,30 @@ class Stamp extends Model
     /** @use HasFactory<\Database\Factories\StampFactory> */
     use HasFactory, LogsActivity;
 
+    protected $fillable = [
+        'user_id',
+        'campaign_id',
+        'transaction_id',
+        'code',
+        'source',
+    ];
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
             ->logAll()
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'source' => StampSource::class,
+        ];
     }
 
     /**

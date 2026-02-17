@@ -19,12 +19,15 @@ class StampsTable
                 TextColumn::make('campaign.reward_name')
                     ->label('Campaign')
                     ->searchable(),
+                TextColumn::make('code')
+                    ->searchable(),
+                TextColumn::make('source')
+                    ->badge()
+                    ->searchable(),
                 TextColumn::make('transaction.amount')
                     ->label('Transaction Amount')
                     ->money('INR')
-                    ->searchable(),
-                TextColumn::make('code')
-                    ->searchable(),
+                    ->placeholder('—'),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

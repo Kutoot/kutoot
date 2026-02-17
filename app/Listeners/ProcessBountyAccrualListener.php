@@ -12,6 +12,6 @@ class ProcessBountyAccrualListener implements ShouldQueue
 
     public function handle(CommissionEarned $event): void
     {
-        $this->bountyService->onCommissionEarned($event->transaction);
+        $this->bountyService->onCommissionEarned($event->campaign, $event->amount);
     }
 }

@@ -12,8 +12,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('campaign_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('transaction_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('transaction_id')->nullable()->constrained()->nullOnDelete();
             $table->string('code')->unique();
+            $table->string('source')->default('bill_payment'); // plan_purchase, bill_payment
             $table->timestamps();
         });
     }

@@ -12,6 +12,12 @@ class UserSubscription extends Model
     /** @use HasFactory<\Database\Factories\UserSubscriptionFactory> */
     use HasFactory;
 
+    protected $fillable = [
+        'user_id',
+        'plan_id',
+        'status',
+    ];
+
     /**
      * @return array<string, string>
      */

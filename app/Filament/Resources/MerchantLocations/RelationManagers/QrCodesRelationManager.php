@@ -2,14 +2,13 @@
 
 namespace App\Filament\Resources\MerchantLocations\RelationManagers;
 
-use Filament\Actions\AssociateAction;
+use App\Enums\QrCodeStatus;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\DissociateAction;
-use Filament\Actions\DissociateBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
@@ -24,35 +23,46 @@ class QrCodesRelationManager extends RelationManager
     {
         return $schema
             ->components([
+                TextInput::make('unique_code')
+                    ->required()
+                    ->unique(ignoreRecord: true),
                 TextInput::make('token')
                     ->required()
-                    ->maxLength(255),
+                    ->unique(ignoreRecord: true),
+                Select::make('status')
+                    ->options(QrCodeStatus::class)
+                    ->default(QrCodeStatus::Available)
+                    ->required(),
             ]);
     }
 
     public function table(Table $table): Table
     {
         return $table
-            ->recordTitleAttribute('token')
+            ->recordTitleAttribute('unique_code')
             ->columns([
-                TextColumn::make('token')
+                TextColumn::make('unique_code')
                     ->searchable(),
+                TextColumn::make('status')
+                    ->badge(),
+                TextColumn::make('executive.name')
+                    ->label('Linked By'),
+                TextColumn::make('linked_at')
+                    ->dateTime()
+                    ->sortable(),
             ])
             ->filters([
                 //
             ])
             ->headerActions([
                 CreateAction::make(),
-                AssociateAction::make(),
             ])
             ->recordActions([
                 EditAction::make(),
-                DissociateAction::make(),
                 DeleteAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DissociateBulkAction::make(),
                     DeleteBulkAction::make(),
                 ]),
             ]);
