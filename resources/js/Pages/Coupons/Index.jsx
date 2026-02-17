@@ -11,7 +11,7 @@ import CurrencySymbol from '@/Components/CurrencySymbol';
 
 
 export default function Index({ auth, coupons, locations, planName, stampsPerHundred, primaryCampaign, availableCampaigns }) {
-    const { platform_fee, gst_rate, platform_fee_type } = usePage().props;
+    const { platform_fee, gst_rate, platform_fee_type, appDebug } = usePage().props;
 
     const [confirmingRedemption, setConfirmingRedemption] = useState(false);
     const [selectedCoupon, setSelectedCoupon] = useState(null);
@@ -25,6 +25,7 @@ export default function Index({ auth, coupons, locations, planName, stampsPerHun
     const selectedLocationName = locations.find(l => String(l.id) === String(data.merchant_location_id))?.name;
 
     useEffect(() => {
+        if (appDebug) return; // Skip Razorpay in debug mode
         const script = document.createElement('script');
         script.src = 'https://checkout.razorpay.com/v1/checkout.js';
         script.async = true;
@@ -93,6 +94,14 @@ export default function Index({ auth, coupons, locations, planName, stampsPerHun
 
             if (response.ok) {
                 closeModal();
+                if (result.debug) {
+                    // Debug mode: no payment needed, just reload
+                    router.visit(route('coupons.index'), {
+                        preserveScroll: true,
+                        only: ['coupons'],
+                    });
+                    return;
+                }
                 handleRazorpayPayment(result.order, result.transaction_id);
             } else {
                 alert(result.error || 'Something went wrong');
@@ -363,7 +372,7 @@ export default function Index({ auth, coupons, locations, planName, stampsPerHun
 
                         <SecondaryButton onClick={closeModal}>Cancel</SecondaryButton>
                         <PrimaryButton className="ms-3" disabled={processing}>
-                            Pay <CurrencySymbol />{breakdown.total.toFixed(2)} & Redeem
+                            {appDebug ? '🐛 Debug Redeem (Free)' : <>Pay <CurrencySymbol />{breakdown.total.toFixed(2)} & Redeem</>}
                         </PrimaryButton>
                     </div>
 

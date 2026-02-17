@@ -72,7 +72,7 @@ export default function Dashboard({ auth, user, plan, primaryCampaign, stats, re
                                             </div>
                                             <div className="bg-gradient-to-br from-lucky-50 to-lucky-100 rounded-xl p-3 text-center border border-lucky-200">
                                                 <p className="text-2xl font-bold text-lucky-600">{plan.stamps_per_100}</p>
-                                                <p className="text-xs text-lucky-700 font-medium">Per <CurrencySymbol />100</p>
+                                                <p className="text-xs text-lucky-700 font-medium">Stamps per <CurrencySymbol />100 Bill</p>
                                             </div>
                                             <div className="bg-gradient-to-br from-ticket-50 to-ticket-100 rounded-xl p-3 text-center border border-ticket-200">
                                                 <p className="text-2xl font-bold text-ticket-600">{plan.max_discounted_bills}</p>

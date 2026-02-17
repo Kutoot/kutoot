@@ -52,7 +52,7 @@ export default function Index({ auth, plans, currentSubscription, isLoggedIn }) 
                                             </div>
                                             <div className="flex-1 bg-white/80 backdrop-blur-sm rounded-xl p-3 text-center border border-dashed border-lucky-200">
                                                 <p className={`text-2xl font-bold ${colors.accent}`}>{plan.stamps_per_100}</p>
-                                                <p className="text-xs text-gray-500 font-medium">📊 per <CurrencySymbol />100</p>
+                                                <p className="text-xs text-gray-500 font-medium">Stamps per <CurrencySymbol />100 Bill</p>
                                             </div>
                                         </div>
                                     </div>

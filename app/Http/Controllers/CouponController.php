@@ -55,6 +55,7 @@ class CouponController extends Controller
             ] : null,
             'availableCampaigns' => $availableCampaigns,
             'isLoggedIn' => (bool) $user,
+            'appDebug' => config('app.debug'),
         ]);
     }
 
@@ -121,7 +122,36 @@ class CouponController extends Controller
                     'commission_amount' => $commissionAmount,
                 ]);
 
-                // 5. Initiate payment order
+                // 5. Debug mode: skip payment gateway and auto-complete
+                if (config('app.debug')) {
+                    $transaction->update(['payment_status' => 'paid', 'payment_id' => 'debug_'.uniqid()]);
+
+                    // Complete coupon redemption
+                    if ($transaction->coupon_id) {
+                        $coupon_model = DiscountCoupon::find($transaction->coupon_id);
+                        if ($coupon_model) {
+                            $this->redemptionService->redeemCoupon($user, $coupon_model, $transaction);
+                        }
+                    }
+
+                    // Award stamps
+                    $this->stampService->awardStampsForBill($transaction);
+
+                    // Dispatch commission earned event
+                    if ($transaction->commission_amount > 0 && $user->primary_campaign_id) {
+                        $campaign = $user->primaryCampaign;
+                        if ($campaign) {
+                            CommissionEarned::dispatch($campaign, (float) $transaction->commission_amount);
+                        }
+                    }
+
+                    return response()->json([
+                        'debug' => true,
+                        'message' => 'Debug mode: Coupon redeemed without payment.',
+                    ]);
+                }
+
+                // 6. Initiate payment order
                 $order = $this->paymentManager->driver()->createOrder($transaction);
                 $transaction->update(['payment_id' => $order['id']]);
 
