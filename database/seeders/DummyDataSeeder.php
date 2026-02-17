@@ -29,6 +29,7 @@ class DummyDataSeeder extends Seeder
             'stamps_per_100' => 1,
             'max_discounted_bills' => 5,
             'max_redeemable_amount' => 500,
+            'duration_days' => 30,
         ]);
 
         $silverPlan = SubscriptionPlan::create([
@@ -37,6 +38,7 @@ class DummyDataSeeder extends Seeder
             'stamps_per_100' => 2,
             'max_discounted_bills' => 15,
             'max_redeemable_amount' => 1500,
+            'duration_days' => 60,
         ]);
 
         $goldPlan = SubscriptionPlan::create([
@@ -45,6 +47,7 @@ class DummyDataSeeder extends Seeder
             'stamps_per_100' => 3,
             'max_discounted_bills' => 30,
             'max_redeemable_amount' => 3000,
+            'duration_days' => 90,
         ]);
 
         $platinumPlan = SubscriptionPlan::create([
@@ -53,6 +56,7 @@ class DummyDataSeeder extends Seeder
             'stamps_per_100' => 5,
             'max_discounted_bills' => 50,
             'max_redeemable_amount' => 5000,
+            'duration_days' => 180,
         ]);
 
         $diamondPlan = SubscriptionPlan::create([
@@ -61,6 +65,7 @@ class DummyDataSeeder extends Seeder
             'stamps_per_100' => 8,
             'max_discounted_bills' => 100,
             'max_redeemable_amount' => 10000,
+            'duration_days' => 365,
         ]);
 
         $allPlans = [$bronzePlan, $silverPlan, $goldPlan, $platinumPlan, $diamondPlan];

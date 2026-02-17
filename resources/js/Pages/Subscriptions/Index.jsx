@@ -1,9 +1,9 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import CurrencySymbol from '@/Components/CurrencySymbol';
 
 
-export default function Index({ auth, plans, currentSubscription }) {
+export default function Index({ auth, plans, currentSubscription, isLoggedIn }) {
     const currentPlanIndex = plans.findIndex(p => p.id === currentSubscription?.plan_id);
 
     const handleUpgrade = (planId) => {
@@ -47,14 +47,30 @@ export default function Index({ auth, plans, currentSubscription }) {
                                             <span>Max Redeemable Amount</span>
                                             <span className="font-medium"><CurrencySymbol />{parseFloat(plan.max_redeemable_amount).toFixed(2)}</span>
                                         </li>
+                                        <li className="flex justify-between">
+                                            <span>Validity</span>
+                                            <span className="font-medium">{plan.duration_days ? `${plan.duration_days} days` : '∞'}</span>
+                                        </li>
                                     </ul>
 
                                     {currentSubscription?.plan_id === plan.id ? (
-                                        <button disabled className="w-full bg-indigo-100 text-indigo-700 font-bold py-2 px-4 rounded cursor-not-allowed">
-                                            Current Plan
-                                        </button>
+                                        <div>
+                                            <button disabled className="w-full bg-indigo-100 text-indigo-700 font-bold py-2 px-4 rounded cursor-not-allowed">
+                                                Current Plan
+                                            </button>
+                                            {currentSubscription.expires_at && (
+                                                <p className="text-center text-xs text-gray-400 mt-1">Expires: {currentSubscription.expires_at}</p>
+                                            )}
+                                        </div>
                                     ) : plan.is_default ? (
                                         <p className="w-full text-center text-xs text-gray-400 py-2">Auto-assigned when plan expires</p>
+                                    ) : !isLoggedIn ? (
+                                        <Link
+                                            href={route('login')}
+                                            className="w-full block text-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-200"
+                                        >
+                                            Login to Upgrade
+                                        </Link>
                                     ) : plans.indexOf(plan) > currentPlanIndex ? (
                                         <button
                                             onClick={() => handleUpgrade(plan.id)}

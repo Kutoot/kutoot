@@ -18,7 +18,7 @@ class SubscriptionController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
-        $currentSubscription = $user->effectiveSubscription();
+        $currentSubscription = $user?->effectiveSubscription();
         $currentPlanId = $currentSubscription?->plan_id;
 
         $plans = SubscriptionPlan::query()
@@ -36,6 +36,7 @@ class SubscriptionController extends Controller
                 'stamps_per_100' => $plan->stamps_per_100,
                 'max_discounted_bills' => $plan->max_discounted_bills,
                 'max_redeemable_amount' => $plan->max_redeemable_amount,
+                'duration_days' => $plan->duration_days,
                 'campaigns' => $plan->campaigns->map(fn ($campaign) => [
                     'id' => $campaign->id,
                     'reward_name' => $campaign->reward_name,
@@ -66,9 +67,11 @@ class SubscriptionController extends Controller
             'currentSubscription' => $currentSubscription ? [
                 'plan_id' => $currentSubscription->plan_id,
                 'status' => $currentSubscription->status,
+                'expires_at' => $currentSubscription->expires_at?->toDateString(),
             ] : null,
-            'primaryCampaignId' => $user->primary_campaign_id,
+            'primaryCampaignId' => $user?->primary_campaign_id,
             'availableCampaigns' => $availableCampaigns,
+            'isLoggedIn' => (bool) $user,
         ]);
     }
 

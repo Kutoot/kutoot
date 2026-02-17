@@ -20,6 +20,12 @@ class SubscriptionPlanForm
                     ->label('Default Plan')
                     ->helperText('New users will be assigned to this plan automatically.'),
 
+                TextInput::make('duration_days')
+                    ->label('Plan Duration (Days)')
+                    ->helperText('Number of days the plan is valid after purchase. Leave empty for plans that never expire (e.g. base plan).')
+                    ->numeric()
+                    ->nullable(),
+
                 Section::make('Stamp Configuration')
                     ->schema([
                         TextInput::make('stamps_on_purchase')

@@ -13,6 +13,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('plan_id')->constrained('subscription_plans')->cascadeOnDelete();
             $table->string('status')->default('active');
+            $table->timestamp('expires_at')->nullable();
             $table->timestamps();
         });
     }

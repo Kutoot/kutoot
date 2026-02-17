@@ -17,6 +17,7 @@ class BasePlanSeeder extends Seeder
                 'max_discounted_bills' => 5,
                 'max_redeemable_amount' => 500,
                 'is_default' => true,
+                'duration_days' => null,
             ]
         );
     }

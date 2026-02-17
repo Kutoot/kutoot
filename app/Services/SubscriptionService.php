@@ -26,14 +26,13 @@ class SubscriptionService
         ]);
 
         // Create new subscription
+        $plan = SubscriptionPlan::find($planId);
         $subscription = UserSubscription::create([
             'user_id' => $user->id,
             'plan_id' => $planId,
             'status' => SubscriptionStatus::Active,
+            'expires_at' => $plan?->duration_days ? now()->addDays($plan->duration_days) : null,
         ]);
-
-        // Award bonus stamps for plan purchase
-        $plan = SubscriptionPlan::find($planId);
         if ($plan && $plan->stamps_on_purchase > 0 && $user->primary_campaign_id) {
             $this->stampService->awardStampsForPlanPurchase($user, $plan);
         }
@@ -108,6 +107,7 @@ class SubscriptionService
             'user_id' => $user->id,
             'plan_id' => $basePlan->id,
             'status' => SubscriptionStatus::Active,
+            'expires_at' => null,
         ]);
 
         // If current primary campaign is not in the base plan, clear it

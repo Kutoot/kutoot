@@ -2,17 +2,14 @@
 
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 Route::get('/', [\App\Http\Controllers\CampaignController::class, 'index'])->name('campaigns.index');
 Route::get('/campaigns/{campaign}', [\App\Http\Controllers\CampaignController::class, 'show'])->name('campaigns.show');
 Route::get('/coupons', [\App\Http\Controllers\CouponController::class, 'index'])->name('coupons.index');
+Route::get('/subscriptions', [\App\Http\Controllers\SubscriptionController::class, 'index'])->name('subscriptions.index');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/dashboard', function () {
-        return Inertia::render('Dashboard');
-    }
-    )->name('dashboard');
+    Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
     Route::post('/coupons/{coupon}/redeem', [\App\Http\Controllers\CouponController::class, 'redeem'])->name('coupons.redeem');
     Route::post('/coupons/transactions/{transaction}/verify', [\App\Http\Controllers\CouponController::class, 'verifyPayment'])->name('coupons.verify-payment');
@@ -26,7 +23,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/q/{token}', [\App\Http\Controllers\QrScanController::class, 'scan'])->name('qr.scan');
 
     // Subscriptions
-    Route::get('/subscriptions', [\App\Http\Controllers\SubscriptionController::class, 'index'])->name('subscriptions.index');
     Route::post('/subscriptions/upgrade', [\App\Http\Controllers\SubscriptionController::class, 'upgrade'])->name('subscriptions.upgrade');
     Route::post('/subscriptions/primary-campaign', [\App\Http\Controllers\SubscriptionController::class, 'setPrimaryCampaign'])->name('subscriptions.setPrimaryCampaign');
 });

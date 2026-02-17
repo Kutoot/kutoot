@@ -16,6 +16,7 @@ class UserSubscription extends Model
         'user_id',
         'plan_id',
         'status',
+        'expires_at',
     ];
 
     /**
@@ -25,6 +26,7 @@ class UserSubscription extends Model
     {
         return [
             'status' => SubscriptionStatus::class,
+            'expires_at' => 'datetime',
         ];
     }
 

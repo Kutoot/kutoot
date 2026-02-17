@@ -16,6 +16,7 @@ return new class extends Migration
             $table->integer('stamps_per_100')->default(1);
             $table->integer('max_discounted_bills');
             $table->decimal('max_redeemable_amount', 15, 2);
+            $table->unsignedInteger('duration_days')->nullable();
             $table->timestamps();
         });
     }

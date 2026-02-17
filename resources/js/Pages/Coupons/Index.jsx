@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm, router } from '@inertiajs/react';
+import { Head, Link, useForm, router, usePage } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -8,7 +8,6 @@ import TextInput from '@/Components/TextInput';
 import Modal from '@/Components/Modal';
 import SecondaryButton from '@/Components/SecondaryButton';
 import CurrencySymbol from '@/Components/CurrencySymbol';
-import { usePage } from '@inertiajs/react';
 
 
 export default function Index({ auth, coupons, locations, planName, stampsPerHundred, primaryCampaign, availableCampaigns }) {
@@ -22,6 +21,8 @@ export default function Index({ auth, coupons, locations, planName, stampsPerHun
         amount: '',
         campaign_id: primaryCampaign?.id || '',
     });
+
+    const selectedLocationName = locations.find(l => String(l.id) === String(data.merchant_location_id))?.name;
 
     useEffect(() => {
         const script = document.createElement('script');
@@ -223,7 +224,12 @@ export default function Index({ auth, coupons, locations, planName, stampsPerHun
             <Modal show={confirmingRedemption} onClose={closeModal}>
                 <form onSubmit={initiatePayment} className="p-6">
                     <h2 className="text-lg font-medium text-gray-900">
-                        Redeem Coupon: {selectedCoupon?.title}
+                        Redeem: {selectedCoupon?.title}
+                        {selectedLocationName && (
+                            <span className="block text-sm font-normal text-indigo-600 mt-1">
+                                at {selectedLocationName}
+                            </span>
+                        )}
                     </h2>
 
                     <p className="mt-1 text-sm text-gray-600">

@@ -19,11 +19,15 @@ class UserSubscriptionFactory extends Factory
             'user_id' => User::factory(),
             'plan_id' => SubscriptionPlan::factory(),
             'status' => SubscriptionStatus::Active,
+            'expires_at' => now()->addDays(30),
         ];
     }
 
     public function expired(): static
     {
-        return $this->state(fn () => ['status' => SubscriptionStatus::Expired]);
+        return $this->state(fn () => [
+            'status' => SubscriptionStatus::Expired,
+            'expires_at' => now()->subDay(),
+        ]);
     }
 }

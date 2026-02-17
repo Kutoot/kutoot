@@ -34,6 +34,11 @@ class SubscriptionPlansTable
                 TextColumn::make('max_redeemable_amount')
                     ->numeric()
                     ->sortable(),
+                TextColumn::make('duration_days')
+                    ->label('Duration')
+                    ->suffix(' days')
+                    ->placeholder('∞')
+                    ->sortable(),
                 TextColumn::make('campaigns_count')
                     ->counts('campaigns')
                     ->label('Campaigns')

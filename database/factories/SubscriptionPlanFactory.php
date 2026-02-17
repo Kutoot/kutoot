@@ -18,6 +18,7 @@ class SubscriptionPlanFactory extends Factory
             'stamps_per_100' => fake()->numberBetween(1, 5),
             'max_discounted_bills' => fake()->numberBetween(5, 50),
             'max_redeemable_amount' => fake()->randomFloat(2, 500, 10000),
+            'duration_days' => fake()->randomElement([30, 60, 90, 180, 365]),
         ];
     }
 }
