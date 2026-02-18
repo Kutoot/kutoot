@@ -25,6 +25,7 @@ class DummyDataSeeder extends Seeder
         // 1. Create 5 Subscription Plans
         $bronzePlan = SubscriptionPlan::create([
             'name' => 'Bronze',
+            'price' => 99,
             'stamps_on_purchase' => 2,
             'stamps_per_100' => 1,
             'max_discounted_bills' => 5,
@@ -34,6 +35,7 @@ class DummyDataSeeder extends Seeder
 
         $silverPlan = SubscriptionPlan::create([
             'name' => 'Silver',
+            'price' => 299,
             'stamps_on_purchase' => 5,
             'stamps_per_100' => 2,
             'max_discounted_bills' => 15,
@@ -43,6 +45,7 @@ class DummyDataSeeder extends Seeder
 
         $goldPlan = SubscriptionPlan::create([
             'name' => 'Gold',
+            'price' => 599,
             'stamps_on_purchase' => 10,
             'stamps_per_100' => 3,
             'max_discounted_bills' => 30,
@@ -52,6 +55,7 @@ class DummyDataSeeder extends Seeder
 
         $platinumPlan = SubscriptionPlan::create([
             'name' => 'Platinum',
+            'price' => 999,
             'stamps_on_purchase' => 15,
             'stamps_per_100' => 5,
             'max_discounted_bills' => 50,
@@ -61,6 +65,7 @@ class DummyDataSeeder extends Seeder
 
         $diamondPlan = SubscriptionPlan::create([
             'name' => 'Diamond',
+            'price' => 1999,
             'stamps_on_purchase' => 25,
             'stamps_per_100' => 8,
             'max_discounted_bills' => 100,

@@ -98,17 +98,26 @@ class SubscriptionService
                 ->exists();
 
             if (! $alreadyAwarded) {
-                $deferredPlanPrice = (float) ($plan->price ?? 0);
-                $transaction = Transaction::create([
-                    'user_id' => $user->id,
-                    'amount' => $deferredPlanPrice,
-                    'original_bill_amount' => $deferredPlanPrice,
-                    'total_amount' => $deferredPlanPrice,
-                    'payment_status' => 'completed',
-                    'payment_gateway' => 'plan_upgrade',
-                    'payment_id' => 'PLAN-'.$plan->id.'-'.now()->timestamp,
-                    'commission_amount' => 0,
-                ]);
+                // Reuse the transaction created during plan upgrade instead of creating a duplicate
+                $transaction = $user->transactions()
+                    ->where('payment_gateway', 'plan_upgrade')
+                    ->where('payment_id', 'like', 'PLAN-'.$plan->id.'-%')
+                    ->latest()
+                    ->first();
+
+                if (! $transaction) {
+                    $transaction = Transaction::create([
+                        'user_id' => $user->id,
+                        'amount' => (float) ($plan->price ?? 0),
+                        'original_bill_amount' => (float) ($plan->price ?? 0),
+                        'total_amount' => (float) ($plan->price ?? 0),
+                        'payment_status' => 'completed',
+                        'payment_gateway' => 'plan_upgrade',
+                        'payment_id' => 'PLAN-'.$plan->id.'-'.now()->timestamp,
+                        'commission_amount' => 0,
+                    ]);
+                }
+
                 $this->stampService->awardStampsForPlanPurchase($user, $plan, $campaignId, $transaction);
             }
         }
