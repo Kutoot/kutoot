@@ -38,7 +38,11 @@ class HandleInertiaRequests extends Middleware
             'platform_fee' => config('app.platform_fee'),
             'gst_rate' => config('app.gst_rate'),
             'platform_fee_type' => config('app.platform_fee_type'),
-
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+                'needsCampaignSelection' => fn () => $request->session()->get('needsCampaignSelection'),
+            ],
         ];
     }
 }

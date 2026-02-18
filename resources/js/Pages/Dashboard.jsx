@@ -2,7 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 import CurrencySymbol from '@/Components/CurrencySymbol';
 
-export default function Dashboard({ auth, user, plan, primaryCampaign, stats, recentTransactions, recentRedemptions, activityLogs }) {
+export default function Dashboard({ auth, user, plan, primaryCampaign, stats, recentActivity, stamps, activityLogs }) {
     return (
         <AuthenticatedLayout
             user={auth.user}
@@ -135,85 +135,112 @@ export default function Dashboard({ auth, user, plan, primaryCampaign, stats, re
                         <StatCard label="Redeem Amount Left" value={<><CurrencySymbol />{stats.remaining_redeem_amount.toFixed(2)}</>} emoji="🎁" color="rose" />
                     </div>
 
-                    {/* Transactions & Redemptions */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Recent Transactions */}
-                        <div className="coupon-card p-6">
-                            <h3 className="font-display text-lg text-gray-900 mb-4 flex items-center gap-2">
-                                <span className="text-xl">📜</span> Recent Transactions
-                            </h3>
-                            {recentTransactions.length > 0 ? (
-                                <div className="overflow-x-auto">
-                                    <table className="min-w-full text-sm">
-                                        <thead>
-                                            <tr className="border-b-2 border-dashed border-lucky-200 text-left text-lucky-600">
-                                                <th className="pb-2 font-bold">Coupon</th>
-                                                <th className="pb-2 font-bold">Location</th>
-                                                <th className="pb-2 font-bold text-right">Amount</th>
-                                                <th className="pb-2 font-bold text-right">When</th>
+                    {/* Recent Activity (Combined Transactions & Redemptions) */}
+                    <div className="coupon-card p-6">
+                        <h3 className="font-display text-lg text-gray-900 mb-4 flex items-center gap-2">
+                            <span className="text-xl">📜</span> Recent Activity
+                        </h3>
+                        {recentActivity.length > 0 ? (
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full text-sm">
+                                    <thead>
+                                        <tr className="border-b-2 border-dashed border-lucky-200 text-left text-lucky-600">
+                                            <th className="pb-2 font-bold">Coupon</th>
+                                            <th className="pb-2 font-bold">Location</th>
+                                            <th className="pb-2 font-bold text-right">Bill</th>
+                                            <th className="pb-2 font-bold text-right">Discount</th>
+                                            <th className="pb-2 font-bold text-right">Fee</th>
+                                            <th className="pb-2 font-bold text-right">GST</th>
+                                            <th className="pb-2 font-bold text-right">Paid</th>
+                                            <th className="pb-2 font-bold text-center">Stamps</th>
+                                            <th className="pb-2 font-bold text-right">When</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-dashed divide-lucky-100">
+                                        {recentActivity.map(a => (
+                                            <tr key={a.id} className="hover:bg-lucky-50/50 transition-colors">
+                                                <td className="py-2.5 text-gray-900 font-medium">{a.coupon_title ?? '—'}</td>
+                                                <td className="py-2.5 text-gray-600">{a.location_name ?? '—'}</td>
+                                                <td className="py-2.5 text-right text-gray-700"><CurrencySymbol />{a.original_bill_amount.toFixed(2)}</td>
+                                                <td className="py-2.5 text-right font-bold text-green-600">
+                                                    {a.discount_amount > 0 ? <>-<CurrencySymbol />{a.discount_amount.toFixed(2)}</> : '—'}
+                                                </td>
+                                                <td className="py-2.5 text-right text-gray-500">
+                                                    {a.platform_fee > 0 ? <><CurrencySymbol />{a.platform_fee.toFixed(2)}</> : '—'}
+                                                </td>
+                                                <td className="py-2.5 text-right text-gray-500">
+                                                    {a.gst_amount > 0 ? <><CurrencySymbol />{a.gst_amount.toFixed(2)}</> : '—'}
+                                                </td>
+                                                <td className="py-2.5 text-right font-bold text-lucky-700"><CurrencySymbol />{a.total_paid.toFixed(2)}</td>
+                                                <td className="py-2.5 text-center">
+                                                    {a.stamps_earned > 0 ? (
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-lucky-100 text-lucky-700 text-xs font-bold">
+                                                            🎫 {a.stamps_earned}
+                                                        </span>
+                                                    ) : '—'}
+                                                </td>
+                                                <td className="py-2.5 text-right text-gray-400 text-xs">{a.created_at}</td>
                                             </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-dashed divide-lucky-100">
-                                            {recentTransactions.map(t => (
-                                                <tr key={t.id} className="hover:bg-lucky-50/50 transition-colors">
-                                                    <td className="py-2.5 text-gray-900 font-medium">{t.coupon_title ?? '—'}</td>
-                                                    <td className="py-2.5 text-gray-600">{t.location_name ?? '—'}</td>
-                                                    <td className="py-2.5 text-right font-bold text-lucky-600"><CurrencySymbol />{t.total_amount.toFixed(2)}</td>
-                                                    <td className="py-2.5 text-right text-gray-400 text-xs">{t.created_at}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            ) : (
-                                <div className="text-center py-6">
-                                    <span className="text-3xl">💤</span>
-                                    <p className="text-gray-400 text-sm mt-2">No transactions yet.</p>
-                                </div>
-                            )}
-                        </div>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <div className="text-center py-6">
+                                <span className="text-3xl">💤</span>
+                                <p className="text-gray-400 text-sm mt-2">No activity yet.</p>
+                            </div>
+                        )}
+                    </div>
 
-                        {/* Coupon Redemptions */}
-                        <div className="coupon-card p-6">
-                            <h3 className="font-display text-lg text-gray-900 mb-4 flex items-center gap-2">
-                                <span className="text-xl">🎫</span> Coupons Used
-                            </h3>
-                            {recentRedemptions.length > 0 ? (
-                                <div className="overflow-x-auto">
-                                    <table className="min-w-full text-sm">
-                                        <thead>
-                                            <tr className="border-b-2 border-dashed border-ticket-200 text-left text-ticket-600">
-                                                <th className="pb-2 font-bold">Coupon</th>
-                                                <th className="pb-2 font-bold text-right">Bill</th>
-                                                <th className="pb-2 font-bold text-right">Discount</th>
-                                                <th className="pb-2 font-bold text-right">Fee</th>
-                                                <th className="pb-2 font-bold text-right">GST</th>
-                                                <th className="pb-2 font-bold text-right">Paid</th>
-                                                <th className="pb-2 font-bold text-right">When</th>
+                    {/* Stamps Detail */}
+                    <div className="coupon-card p-6">
+                        <h3 className="font-display text-lg text-gray-900 mb-4 flex items-center gap-2">
+                            <span className="text-xl">🎫</span> My Stamps
+                        </h3>
+                        {stamps.length > 0 ? (
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full text-sm">
+                                    <thead>
+                                        <tr className="border-b-2 border-dashed border-lucky-200 text-left text-lucky-600">
+                                            <th className="pb-2 font-bold">Code</th>
+                                            <th className="pb-2 font-bold">Source</th>
+                                            <th className="pb-2 font-bold">Campaign</th>
+                                            <th className="pb-2 font-bold text-right">Bill Amount</th>
+                                            <th className="pb-2 font-bold text-right">Earned</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-dashed divide-lucky-100">
+                                        {stamps.map(s => (
+                                            <tr key={s.id} className="hover:bg-lucky-50/50 transition-colors">
+                                                <td className="py-2.5">
+                                                    <span className="font-mono text-xs bg-lucky-100 text-lucky-700 px-2 py-0.5 rounded">{s.code}</span>
+                                                </td>
+                                                <td className="py-2.5">
+                                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                                                        s.source === 'Plan Purchase'
+                                                            ? 'bg-ticket-100 text-ticket-700'
+                                                            : 'bg-lucky-100 text-lucky-700'
+                                                    }`}>
+                                                        {s.source === 'Plan Purchase' ? '⭐' : '🧾'} {s.source}
+                                                    </span>
+                                                </td>
+                                                <td className="py-2.5 text-gray-700 font-medium">{s.campaign_name ?? '—'}</td>
+                                                <td className="py-2.5 text-right text-gray-600">
+                                                    {s.bill_amount > 0 ? <><CurrencySymbol />{s.bill_amount.toFixed(2)}</> : '—'}
+                                                </td>
+                                                <td className="py-2.5 text-right text-gray-400 text-xs">{s.created_at}</td>
                                             </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-dashed divide-ticket-100">
-                                            {recentRedemptions.map(r => (
-                                                <tr key={r.id} className="hover:bg-ticket-50/50 transition-colors">
-                                                    <td className="py-2.5 text-gray-900 font-medium">{r.coupon_title ?? '—'}</td>
-                                                    <td className="py-2.5 text-right text-gray-600"><CurrencySymbol />{r.original_bill_amount.toFixed(2)}</td>
-                                                    <td className="py-2.5 text-right font-bold text-green-600">-<CurrencySymbol />{r.discount_applied.toFixed(2)}</td>
-                                                    <td className="py-2.5 text-right text-gray-500"><CurrencySymbol />{r.platform_fee.toFixed(2)}</td>
-                                                    <td className="py-2.5 text-right text-gray-500"><CurrencySymbol />{r.gst_amount.toFixed(2)}</td>
-                                                    <td className="py-2.5 text-right font-bold text-lucky-700"><CurrencySymbol />{r.total_paid.toFixed(2)}</td>
-                                                    <td className="py-2.5 text-right text-gray-400 text-xs">{r.created_at}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            ) : (
-                                <div className="text-center py-6">
-                                    <span className="text-3xl">🎭</span>
-                                    <p className="text-gray-400 text-sm mt-2">No coupons redeemed yet.</p>
-                                </div>
-                            )}
-                        </div>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <div className="text-center py-6">
+                                <span className="text-3xl">🎭</span>
+                                <p className="text-gray-400 text-sm mt-2">No stamps collected yet.</p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Activity Log */}

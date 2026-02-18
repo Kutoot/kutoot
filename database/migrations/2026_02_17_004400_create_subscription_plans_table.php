@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::create('subscription_plans', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->decimal('price', 15, 2)->default(0)->comment('Plan purchase price');
             $table->boolean('is_default')->default(false);
             $table->integer('stamps_on_purchase')->default(0);
             $table->integer('stamps_per_100')->default(1);

@@ -44,7 +44,7 @@ class StampService
     /**
      * Award bonus stamps when a user purchases or upgrades a plan.
      */
-    public function awardStampsForPlanPurchase(User $user, SubscriptionPlan $plan, ?int $campaignId = null): int
+    public function awardStampsForPlanPurchase(User $user, SubscriptionPlan $plan, ?int $campaignId = null, ?Transaction $transaction = null): int
     {
         $campaign = $this->resolveCampaign($user, $campaignId);
 
@@ -52,7 +52,7 @@ class StampService
             return 0;
         }
 
-        $this->createStamps($user, $campaign, $plan->stamps_on_purchase, StampSource::PlanPurchase);
+        $this->createStamps($user, $campaign, $plan->stamps_on_purchase, StampSource::PlanPurchase, $transaction);
 
         return $plan->stamps_on_purchase;
     }

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\SubscriptionStatus;
 use App\Models\SubscriptionPlan;
+use App\Models\Transaction;
 use App\Models\User;
 use App\Models\UserSubscription;
 
@@ -16,7 +17,7 @@ class SubscriptionService
     /**
      * Upgrade (or purchase) a plan for the user.
      * Expires existing active subscriptions and creates a new one.
-     * Awards bonus stamps if user has a primary campaign set.
+     * Creates a transaction record and awards bonus stamps if user has a primary campaign set.
      */
     public function upgradePlan(User $user, int $planId): UserSubscription
     {
@@ -33,8 +34,22 @@ class SubscriptionService
             'status' => SubscriptionStatus::Active,
             'expires_at' => $plan?->duration_days ? now()->addDays($plan->duration_days) : null,
         ]);
+
+        // Record plan upgrade transaction
+        $planPrice = (float) ($plan?->price ?? 0);
+        $transaction = Transaction::create([
+            'user_id' => $user->id,
+            'amount' => $planPrice,
+            'original_bill_amount' => $planPrice,
+            'total_amount' => $planPrice,
+            'payment_status' => 'completed',
+            'payment_gateway' => 'plan_upgrade',
+            'payment_id' => 'PLAN-'.$planId.'-'.now()->timestamp,
+            'commission_amount' => 0,
+        ]);
+
         if ($plan && $plan->stamps_on_purchase > 0 && $user->primary_campaign_id) {
-            $this->stampService->awardStampsForPlanPurchase($user, $plan);
+            $this->stampService->awardStampsForPlanPurchase($user, $plan, transaction: $transaction);
         }
 
         // If current primary campaign is not in the new plan, clear it
@@ -83,7 +98,18 @@ class SubscriptionService
                 ->exists();
 
             if (! $alreadyAwarded) {
-                $this->stampService->awardStampsForPlanPurchase($user, $plan, $campaignId);
+                $deferredPlanPrice = (float) ($plan->price ?? 0);
+                $transaction = Transaction::create([
+                    'user_id' => $user->id,
+                    'amount' => $deferredPlanPrice,
+                    'original_bill_amount' => $deferredPlanPrice,
+                    'total_amount' => $deferredPlanPrice,
+                    'payment_status' => 'completed',
+                    'payment_gateway' => 'plan_upgrade',
+                    'payment_id' => 'PLAN-'.$plan->id.'-'.now()->timestamp,
+                    'commission_amount' => 0,
+                ]);
+                $this->stampService->awardStampsForPlanPurchase($user, $plan, $campaignId, $transaction);
             }
         }
 

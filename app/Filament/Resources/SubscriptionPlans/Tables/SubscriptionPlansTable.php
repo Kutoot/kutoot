@@ -17,6 +17,9 @@ class SubscriptionPlansTable
             ->columns([
                 TextColumn::make('name')
                     ->searchable(),
+                TextColumn::make('price')
+                    ->money('INR')
+                    ->sortable(),
                 IconColumn::make('is_default')
                     ->boolean()
                     ->label('Default'),

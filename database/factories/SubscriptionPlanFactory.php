@@ -14,6 +14,7 @@ class SubscriptionPlanFactory extends Factory
     {
         return [
             'name' => fake()->randomElement(['Basic', 'Silver', 'Gold', 'Platinum']),
+            'price' => fake()->randomFloat(2, 0, 2999),
             'stamps_on_purchase' => fake()->numberBetween(0, 20),
             'stamps_per_100' => fake()->numberBetween(1, 5),
             'max_discounted_bills' => fake()->numberBetween(5, 50),

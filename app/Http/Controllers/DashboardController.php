@@ -29,35 +29,37 @@ class DashboardController extends Controller
             ? max(0, (float) $plan->max_redeemable_amount - $totalDiscountRedeemed)
             : 0;
 
-        $recentTransactions = $user->transactions()
-            ->with(['coupon:id,title', 'merchantLocation:id,branch_name'])
+        $recentActivity = $user->transactions()
+            ->with(['coupon:id,title', 'merchantLocation:id,branch_name', 'couponRedemption', 'stamps'])
             ->latest()
-            ->limit(10)
+            ->limit(15)
             ->get()
             ->map(fn ($t) => [
                 'id' => $t->id,
-                'amount' => (float) $t->amount,
-                'total_amount' => (float) $t->total_amount,
-                'payment_status' => $t->payment_status,
                 'coupon_title' => $t->coupon?->title,
                 'location_name' => $t->merchantLocation?->branch_name,
+                'original_bill_amount' => (float) ($t->original_bill_amount ?: $t->amount),
+                'discount_amount' => (float) ($t->couponRedemption?->discount_applied ?? $t->discount_amount ?? 0),
+                'platform_fee' => (float) ($t->couponRedemption?->platform_fee ?? 0),
+                'gst_amount' => (float) ($t->couponRedemption?->gst_amount ?? 0),
+                'total_paid' => (float) ($t->couponRedemption?->total_paid ?? $t->total_amount),
+                'stamps_earned' => $t->stamps->count(),
+                'payment_status' => $t->payment_status,
                 'created_at' => $t->created_at->diffForHumans(),
             ]);
 
-        $recentRedemptions = $user->couponRedemptions()
-            ->with(['coupon:id,title'])
+        $stamps = $user->stamps()
+            ->with(['campaign:id,reward_name', 'transaction:id,amount,original_bill_amount'])
             ->latest()
-            ->limit(10)
+            ->limit(20)
             ->get()
-            ->map(fn ($r) => [
-                'id' => $r->id,
-                'coupon_title' => $r->coupon?->title,
-                'discount_applied' => (float) $r->discount_applied,
-                'original_bill_amount' => (float) $r->original_bill_amount,
-                'platform_fee' => (float) $r->platform_fee,
-                'gst_amount' => (float) $r->gst_amount,
-                'total_paid' => (float) $r->total_paid,
-                'created_at' => $r->created_at->diffForHumans(),
+            ->map(fn ($s) => [
+                'id' => $s->id,
+                'code' => $s->code,
+                'source' => $s->source->getLabel(),
+                'campaign_name' => $s->campaign?->reward_name,
+                'bill_amount' => (float) ($s->transaction?->original_bill_amount ?: $s->transaction?->amount ?? 0),
+                'created_at' => $s->created_at->diffForHumans(),
             ]);
 
         $activityLogs = Activity::causedBy($user)
@@ -100,8 +102,8 @@ class DashboardController extends Controller
                 'remaining_bills' => $remainingBills,
                 'remaining_redeem_amount' => $remainingRedeemAmount,
             ],
-            'recentTransactions' => $recentTransactions,
-            'recentRedemptions' => $recentRedemptions,
+            'recentActivity' => $recentActivity,
+            'stamps' => $stamps,
             'activityLogs' => $activityLogs,
         ]);
     }

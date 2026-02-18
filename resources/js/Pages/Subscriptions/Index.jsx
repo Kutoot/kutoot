@@ -1,15 +1,32 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import CurrencySymbol from '@/Components/CurrencySymbol';
+import { useState, useEffect } from 'react';
 
 
-export default function Index({ auth, plans, currentSubscription, isLoggedIn }) {
+export default function Index({ auth, plans, currentSubscription, primaryCampaignId, availableCampaigns, isLoggedIn }) {
     const currentPlanIndex = plans.findIndex(p => p.id === currentSubscription?.plan_id);
+    const { flash } = usePage().props;
+    const [showCampaignModal, setShowCampaignModal] = useState(false);
+    const [selectedCampaign, setSelectedCampaign] = useState(null);
+
+    useEffect(() => {
+        if (flash?.needsCampaignSelection) {
+            setShowCampaignModal(true);
+        }
+    }, [flash?.needsCampaignSelection]);
 
     const handleUpgrade = (planId) => {
         if (confirm('Are you sure you want to upgrade to this plan?')) {
             router.post(route('subscriptions.upgrade'), { plan_id: planId });
         }
+    };
+
+    const handleCampaignSelect = () => {
+        if (!selectedCampaign) return;
+        router.post(route('subscriptions.setPrimaryCampaign'), { campaign_id: selectedCampaign }, {
+            onSuccess: () => setShowCampaignModal(false),
+        });
     };
 
     const tierColors = [
@@ -43,7 +60,14 @@ export default function Index({ auth, plans, currentSubscription, isLoggedIn }) 
                                         <div className="text-center mb-4">
                                             <span className="text-4xl">{colors.icon}</span>
                                         </div>
-                                        <h3 className="font-display text-2xl text-gray-900 text-center mb-4">{plan.name}</h3>
+                                        <h3 className="font-display text-2xl text-gray-900 text-center mb-1">{plan.name}</h3>
+                                        <p className="text-center mb-4">
+                                            {plan.price > 0 ? (
+                                                <span className={`text-3xl font-bold ${colors.accent}`}><CurrencySymbol />{plan.price.toFixed(2)}</span>
+                                            ) : (
+                                                <span className="text-lg font-medium text-gray-400">Free</span>
+                                            )}
+                                        </p>
 
                                         <div className="flex gap-3 mb-4">
                                             <div className="flex-1 bg-white/80 backdrop-blur-sm rounded-xl p-3 text-center border border-dashed border-lucky-200">
@@ -117,6 +141,53 @@ export default function Index({ auth, plans, currentSubscription, isLoggedIn }) 
                     </div>
                 </div>
             </div>
+
+            {/* Campaign Selection Modal */}
+            {showCampaignModal && availableCampaigns.length > 0 && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="coupon-card w-full max-w-md p-6 animate-in fade-in">
+                        <h3 className="font-display text-xl text-gray-900 mb-2 flex items-center gap-2">
+                            <span className="text-2xl">🎯</span> Select Your Campaign
+                        </h3>
+                        <p className="text-sm text-gray-500 mb-5">Choose the campaign you'd like to collect stamps for:</p>
+
+                        <div className="space-y-2 mb-6 max-h-60 overflow-y-auto">
+                            {availableCampaigns.map(campaign => (
+                                <label
+                                    key={campaign.id}
+                                    className={`flex items-center gap-3 p-3 rounded-xl border-2 border-dashed cursor-pointer transition-all ${
+                                        selectedCampaign === campaign.id
+                                            ? 'border-lucky-400 bg-lucky-50'
+                                            : 'border-gray-200 hover:border-lucky-200 hover:bg-lucky-50/30'
+                                    }`}
+                                >
+                                    <input
+                                        type="radio"
+                                        name="campaign"
+                                        value={campaign.id}
+                                        checked={selectedCampaign === campaign.id}
+                                        onChange={() => setSelectedCampaign(campaign.id)}
+                                        className="text-lucky-500 focus:ring-lucky-400"
+                                    />
+                                    <span className="font-medium text-gray-900">{campaign.reward_name}</span>
+                                </label>
+                            ))}
+                        </div>
+
+                        <button
+                            onClick={handleCampaignSelect}
+                            disabled={!selectedCampaign}
+                            className={`w-full font-bold py-2.5 px-4 rounded-full transition-all text-sm ${
+                                selectedCampaign
+                                    ? 'lucky-gradient text-white shadow-md hover:shadow-lg transform hover:-translate-y-0.5'
+                                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                            }`}
+                        >
+                            ✅ Confirm Campaign
+                        </button>
+                    </div>
+                </div>
+            )}
         </AuthenticatedLayout>
     );
 }

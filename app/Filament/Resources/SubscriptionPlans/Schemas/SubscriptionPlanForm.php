@@ -16,6 +16,13 @@ class SubscriptionPlanForm
             ->components([
                 TextInput::make('name')
                     ->required(),
+                TextInput::make('price')
+                    ->label('Price (₹)')
+                    ->helperText('The price users pay to purchase this plan. Set to 0 for free/default plans.')
+                    ->required()
+                    ->numeric()
+                    ->default(0)
+                    ->prefix('₹'),
                 Toggle::make('is_default')
                     ->label('Default Plan')
                     ->helperText('New users will be assigned to this plan automatically.'),

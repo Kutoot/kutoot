@@ -31,6 +31,7 @@ class SubscriptionController extends Controller
             ->map(fn (SubscriptionPlan $plan) => [
                 'id' => $plan->id,
                 'name' => $plan->name,
+                'price' => (float) $plan->price,
                 'is_default' => $plan->is_default,
                 'stamps_on_purchase' => $plan->stamps_on_purchase,
                 'stamps_per_100' => $plan->stamps_per_100,

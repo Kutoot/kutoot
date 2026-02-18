@@ -16,6 +16,7 @@ class SubscriptionPlan extends Model
 
     protected $fillable = [
         'name',
+        'price',
         'is_default',
         'stamps_on_purchase',
         'stamps_per_100',
@@ -38,6 +39,7 @@ class SubscriptionPlan extends Model
     protected function casts(): array
     {
         return [
+            'price' => 'decimal:2',
             'max_redeemable_amount' => 'decimal:2',
             'is_default' => 'boolean',
         ];
