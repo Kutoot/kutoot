@@ -27,14 +27,7 @@ export default function GuestLayout({ children }) {
                     href={route('login')}
                     className="text-lucky-700 hover:text-lucky-900 font-medium transition-colors"
                 >
-                    Login
-                </Link>
-                <span className="text-lucky-300">|</span>
-                <Link
-                    href={route('register')}
-                    className="text-lucky-700 hover:text-lucky-900 font-medium transition-colors"
-                >
-                    Register
+                    Login / Sign up
                 </Link>
             </div>
 

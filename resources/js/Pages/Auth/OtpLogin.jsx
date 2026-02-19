@@ -113,18 +113,6 @@ export default function OtpLogin({ status, debugOtp }) {
 
                     <div className="mt-4 flex items-center justify-between">
                         <div className="flex flex-col gap-1">
-                            <Link
-                                href={route('password-login')}
-                                className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-lucky-500 focus:ring-offset-2"
-                            >
-                                Use password instead
-                            </Link>
-                            <Link
-                                href={route('register')}
-                                className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-lucky-500 focus:ring-offset-2"
-                            >
-                                Create account
-                            </Link>
                         </div>
 
                         <PrimaryButton disabled={sendForm.processing}>
