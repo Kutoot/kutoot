@@ -53,7 +53,7 @@ class RegisteredUserController extends Controller
 
         $flash = ['status' => 'OTP sent to '.$request->mobile.'.'];
 
-        if (config('app.debug')) {
+        if (!app()->isProduction()) {
             $flash['debugOtp'] = $otp;
         }
 

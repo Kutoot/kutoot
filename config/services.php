@@ -55,6 +55,7 @@ return [
             'password' => env('WAY2MINT_PASSWORD'),
             'sender_id' => env('WAY2MINT_SENDER_ID', 'KUTOOT'),
             'pe_id' => env('WAY2MINT_PE_ID'),
+            'provider_pe_id' => env('WAY2MINT_PROVIDER_PE_ID'),
             'otp_template_id' => env('WAY2MINT_OTP_TEMPLATE_ID'),
             'timeout' => env('WAY2MINT_TIMEOUT', 30),
             'retry_attempts' => env('WAY2MINT_RETRY_ATTEMPTS', 3),

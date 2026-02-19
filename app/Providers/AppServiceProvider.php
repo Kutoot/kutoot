@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Contracts\SmsContract;
+use App\Services\Sms\SmsManager;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Vite;
@@ -14,7 +16,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(SmsContract::class, function ($app) {
+            return new SmsManager($app);
+        });
     }
 
     /**

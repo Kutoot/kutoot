@@ -115,8 +115,14 @@ class OtpService
 
         if ($channel === 'mobile' || ($channel === 'email' && is_numeric($target))) {
             // Ensure target is a valid mobile number format if needed, but assuming calling code validates/sanitizes
-            $message = "Your Kutoot login OTP is: {$otp} This code is valid for 10 minutes. Use it to securely access your Kutoot account. Do not share this code with anyone. -Team Kutoot | Shopping is Winning";
-            $this->sms->send($target, $message);
+            // $message = "Your Kutoot login OTP is: {$otp} This code is valid for 10 minutes. Use it to securely access your Kutoot account. Do not share this code with anyone. -Team Kutoot | Shopping is Winning";
+            // $message = "Your Kutoot login OTP is: $otp This code is valid for 10 minutes. "
+            //     . "Use it to securely access your Kutoot account. Do not share this code with anyone. "
+            //     . "-Team Kutoot | Shopping is Winning";
+            $message = "Your Kutoot login OTP is: $otp This code is valid for 10 minutes. Use it to securely access your Kutoot account. Do not share this code with anyone. -Team Kutoot | Shopping is Winning";
+            if (app()->isProduction()) {
+                $this->sms->send($target, $message);
+            }
         }
     }
 }

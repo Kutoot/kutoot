@@ -48,7 +48,7 @@ class OtpLoginController extends Controller
 
         $flash = ['status' => 'OTP sent successfully! Check your '.($isEmail ? 'email' : 'phone').'.'];
 
-        if (config('app.debug')) {
+        if (!app()->isProduction()) {
             $flash['debugOtp'] = $otp;
         }
 
@@ -80,7 +80,7 @@ class OtpLoginController extends Controller
             ]);
         }
 
-        Auth::login($user, remember: true);
+        Auth::login($user, true);
         $request->session()->regenerate();
 
         return redirect()->intended(route('dashboard', absolute: false));

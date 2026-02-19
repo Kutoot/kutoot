@@ -44,6 +44,7 @@ class SmsManager extends Manager implements SmsContract
             $config['password'],
             $config['sender_id'],
             $config['pe_id'] ?? null,
+            $config['provider_pe_id'] ?? null,
             $config['otp_template_id'] ?? null,
             $config['timeout'] ?? 30,
             $config['retry_attempts'] ?? 3,

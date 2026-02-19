@@ -4,7 +4,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Register({ status, debugOtp }) {
     const [otpSent, setOtpSent] = useState(false);
@@ -18,6 +18,13 @@ export default function Register({ status, debugOtp }) {
     const verifyForm = useForm({
         otp: '',
     });
+
+    useEffect(() => {
+        if (debugOtp) {
+            verifyForm.setData('otp', debugOtp);
+            setOtpSent(true);
+        }
+    }, [debugOtp]);
 
     const handleSendOtp = (e) => {
         e.preventDefault();
