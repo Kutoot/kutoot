@@ -2,10 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PaymentStatus;
+use App\Enums\TransactionType;
 use App\Models\SubscriptionPlan;
+use App\Models\Transaction;
+use App\Services\Payments\PaymentManager;
+use App\Services\Payments\TaxCalculator;
 use App\Services\SubscriptionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -13,6 +19,8 @@ class SubscriptionController extends Controller
 {
     public function __construct(
         protected SubscriptionService $subscriptionService,
+        protected PaymentManager $paymentManager,
+        protected TaxCalculator $taxCalculator,
     ) {}
 
     public function index(Request $request): Response
@@ -76,7 +84,7 @@ class SubscriptionController extends Controller
         ]);
     }
 
-    public function upgrade(Request $request): RedirectResponse
+    public function upgrade(Request $request): RedirectResponse|\Illuminate\Http\JsonResponse
     {
         $validated = $request->validate([
             'plan_id' => 'required|exists:subscription_plans,id',
@@ -90,18 +98,117 @@ class SubscriptionController extends Controller
             return back()->with('error', 'You cannot manually switch to the base plan.');
         }
 
-        $this->subscriptionService->upgradePlan($user, $plan->id);
+        $planPrice = (float) $plan->price;
 
-        // If user doesn't have a primary campaign, prompt them to choose one
-        $user->refresh();
-        if (! $user->primary_campaign_id) {
-            return back()->with([
-                'success' => 'Upgraded to '.$plan->name.' successfully! Please select your primary campaign.',
-                'needsCampaignSelection' => true,
-            ]);
+        // Free plan — direct activation without payment
+        if ($planPrice <= 0) {
+            $this->subscriptionService->upgradePlan($user, $plan->id);
+            $user->refresh();
+
+            if (! $user->primary_campaign_id) {
+                return back()->with([
+                    'success' => 'Upgraded to '.$plan->name.' successfully! Please select your primary campaign.',
+                    'needsCampaignSelection' => true,
+                ]);
+            }
+
+            return back()->with('success', 'Upgraded to '.$plan->name.' successfully!');
         }
 
-        return back()->with('success', 'Upgraded to '.$plan->name.' successfully!');
+        // Paid plan — calculate tax and create Razorpay order
+        $priceInPaise = (int) round($planPrice * 100);
+        $taxType = config('app.plan_tax_type', 'exclusive');
+        $taxBreakdown = $this->taxCalculator->calculatePlanTotal($priceInPaise, $taxType);
+
+        $idempotencyKey = 'plan_'.$user->id.'_'.$plan->id.'_'.Str::uuid();
+
+        // Create transaction record
+        $transaction = Transaction::create([
+            'user_id' => $user->id,
+            'original_bill_amount' => $taxBreakdown['base'] / 100,
+            'amount' => $taxBreakdown['base'] / 100,
+            'platform_fee' => 0,
+            'gst_amount' => $taxBreakdown['gst'] / 100,
+            'total_amount' => $taxBreakdown['total'] / 100,
+            'payment_gateway' => $this->paymentManager->getDefaultDriver(),
+            'payment_status' => PaymentStatus::Pending,
+            'type' => TransactionType::PlanPurchase,
+            'idempotency_key' => $idempotencyKey,
+            'commission_amount' => 0,
+        ]);
+
+        // Debug mode: skip payment gateway and auto-complete
+        if (config('app.debug')) {
+            $transaction->update([
+                'payment_status' => PaymentStatus::Paid,
+                'payment_id' => 'debug_'.uniqid(),
+            ]);
+
+            $this->subscriptionService->upgradePlan($user, $plan->id, $transaction);
+            $user->refresh();
+
+            if (! $user->primary_campaign_id) {
+                return back()->with([
+                    'success' => 'Debug mode: Upgraded to '.$plan->name.' successfully! Please select your primary campaign.',
+                    'needsCampaignSelection' => true,
+                ]);
+            }
+
+            return back()->with('success', 'Debug mode: Upgraded to '.$plan->name.' successfully!');
+        }
+
+        // Create Razorpay order
+        try {
+            $gateway = $this->paymentManager->driver();
+            $order = $gateway->createPlanOrder($transaction);
+            $transaction->update(['razorpay_order_id' => $order['id']]);
+
+            return response()->json([
+                'order' => $order,
+                'transaction_id' => $transaction->id,
+                'plan_id' => $plan->id,
+            ]);
+        } catch (\Exception $e) {
+            $transaction->update(['payment_status' => PaymentStatus::Failed]);
+
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
+     * Verify payment for a plan purchase and activate subscription.
+     */
+    public function verifyPlanPayment(Request $request, Transaction $transaction): RedirectResponse
+    {
+        $gateway = $this->paymentManager->driver($transaction->payment_gateway);
+
+        if ($gateway->verifyPayment($request->all())) {
+            $transaction->update([
+                'payment_status' => PaymentStatus::Paid,
+                'payment_id' => $request->input('razorpay_payment_id'),
+            ]);
+
+            // Find the plan from the transaction's idempotency key or notes
+            $planId = $request->input('plan_id');
+            $plan = SubscriptionPlan::findOrFail($planId);
+
+            $user = $transaction->user;
+            $this->subscriptionService->upgradePlan($user, $plan->id, $transaction);
+            $user->refresh();
+
+            if (! $user->primary_campaign_id) {
+                return redirect()->route('subscriptions.index')->with([
+                    'success' => 'Payment successful! Upgraded to '.$plan->name.'. Please select your primary campaign.',
+                    'needsCampaignSelection' => true,
+                ]);
+            }
+
+            return redirect()->route('subscriptions.index')
+                ->with('success', 'Payment successful! Upgraded to '.$plan->name.'.');
+        }
+
+        return redirect()->route('subscriptions.index')
+            ->with('error', 'Payment verification failed. Please contact support.');
     }
 
     /**

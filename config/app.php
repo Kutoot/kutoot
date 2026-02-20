@@ -84,10 +84,12 @@ return [
     'gst_rate' => env('GST_RATE', 18),
     'payment_default_gateway' => env('PAYMENT_DEFAULT_GATEWAY', 'razorpay'),
     'platform_fee_type' => env('PLATFORM_FEE_TYPE', 'fixed'),
+    'plan_tax_type' => env('PLAN_TAX_TYPE', 'exclusive'),
 
     'razorpay' => [
         'key_id' => env('RAZORPAY_KEY_ID'),
         'key_secret' => env('RAZORPAY_KEY_SECRET'),
+        'webhook_secret' => env('RAZORPAY_WEBHOOK_SECRET'),
     ],
 
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),

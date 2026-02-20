@@ -24,6 +24,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Subscriptions
     Route::post('/subscriptions/upgrade', [\App\Http\Controllers\SubscriptionController::class, 'upgrade'])->name('subscriptions.upgrade');
+    Route::post('/subscriptions/verify-payment/{transaction}', [\App\Http\Controllers\SubscriptionController::class, 'verifyPlanPayment'])->name('subscriptions.verify-payment');
     Route::post('/subscriptions/primary-campaign', [\App\Http\Controllers\SubscriptionController::class, 'setPrimaryCampaign'])->name('subscriptions.setPrimaryCampaign');
 });
 

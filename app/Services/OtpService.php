@@ -2,21 +2,21 @@
 
 namespace App\Services;
 
+use App\Mail\OtpMail;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
 
 class OtpService
 {
-    public function __construct(protected \App\Contracts\SmsContract $sms)
-    {
-    }
+    public function __construct(protected \App\Contracts\SmsContract $sms) {}
 
     public const OTP_EXPIRY_MINUTES = 5;
 
     public function generateOtp(User $user): string
     {
-        $otp = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
         $user->update([
             'otp_code' => $otp,
@@ -31,7 +31,7 @@ class OtpService
      */
     public function generateOtpForSession(string $identifier): string
     {
-        $otp = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
         Session::put("otp.{$identifier}", [
             'code' => $otp,
@@ -43,7 +43,7 @@ class OtpService
 
     public function verifyOtp(User $user, string $otp): bool
     {
-        if (!$user->otp_code || !$user->otp_expires_at) {
+        if (! $user->otp_code || ! $user->otp_expires_at) {
             return false;
         }
 
@@ -69,7 +69,7 @@ class OtpService
     {
         $data = Session::get("otp.{$identifier}");
 
-        if (!$data) {
+        if (! $data) {
             return false;
         }
 
@@ -103,26 +103,25 @@ class OtpService
     {
         $target = $identifier;
 
-        if (!$target && $user) {
+        if (! $target && $user) {
             $target = match ($channel) {
-                    'mobile' => $user->mobile,
-                    'email' => $user->email,
-                    default => $user->email ?? $user->mobile,
-                };
+                'mobile' => $user->mobile,
+                'email' => $user->email,
+                default => $user->email ?? $user->mobile,
+            };
         }
 
         Log::info("OTP for {$channel} [{$target}]: {$otp}");
 
+        if ($channel === 'email' && $target && filter_var($target, FILTER_VALIDATE_EMAIL)) {
+            Mail::to($target)->send(new OtpMail($otp));
+
+            return;
+        }
+
         if ($channel === 'mobile' || ($channel === 'email' && is_numeric($target))) {
-            // Ensure target is a valid mobile number format if needed, but assuming calling code validates/sanitizes
-            // $message = "Your Kutoot login OTP is: {$otp} This code is valid for 10 minutes. Use it to securely access your Kutoot account. Do not share this code with anyone. -Team Kutoot | Shopping is Winning";
-            // $message = "Your Kutoot login OTP is: $otp This code is valid for 10 minutes. "
-            //     . "Use it to securely access your Kutoot account. Do not share this code with anyone. "
-            //     . "-Team Kutoot | Shopping is Winning";
             $message = "Your Kutoot login OTP is: $otp This code is valid for 10 minutes. Use it to securely access your Kutoot account. Do not share this code with anyone. -Team Kutoot | Shopping is Winning";
-            if (app()->isProduction()) {
-                $this->sms->send($target, $message);
-            }
+            $this->sms->send($target, $message);
         }
     }
 }

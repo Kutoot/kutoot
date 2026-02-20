@@ -30,6 +30,7 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'primary_campaign_id' => null,
         ];
     }
 
@@ -38,8 +39,8 @@ class UserFactory extends Factory
      */
     public function unverified(): static
     {
-        return $this->state(fn(array $attributes) => [
-        'email_verified_at' => null,
+        return $this->state(fn (array $attributes) => [
+            'email_verified_at' => null,
         ]);
     }
 
@@ -48,18 +49,19 @@ class UserFactory extends Factory
      */
     public function withoutMobile(): static
     {
-        return $this->state(fn(array $attributes) => [
-        'mobile' => null,
+        return $this->state(fn (array $attributes) => [
+            'mobile' => null,
         ]);
     }
+
     /**
      * Indicate that the user only has a mobile number.
      */
     public function mobileOnly(): static
     {
-        return $this->state(fn(array $attributes) => [
-        'email' => null,
-        'email_verified_at' => null,
+        return $this->state(fn (array $attributes) => [
+            'email' => null,
+            'email_verified_at' => null,
         ]);
     }
 
@@ -68,8 +70,8 @@ class UserFactory extends Factory
      */
     public function emailOnly(): static
     {
-        return $this->state(fn(array $attributes) => [
-        'mobile' => null,
+        return $this->state(fn (array $attributes) => [
+            'mobile' => null,
         ]);
     }
 }

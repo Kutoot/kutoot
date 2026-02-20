@@ -17,6 +17,20 @@ interface PaymentGateway
     public function verifyPayment(array $params): bool;
 
     /**
+     * Create a refund for a payment.
+     *
+     * @return array{id: string, amount: int, status: string}
+     */
+    public function createRefund(string $paymentId, int $amountInPaise, array $options = []): array;
+
+    /**
+     * Fetch payment details from the gateway.
+     *
+     * @return array<string, mixed>
+     */
+    public function fetchPayment(string $paymentId): array;
+
+    /**
      * Get the gateway name.
      */
     public function getName(): string;

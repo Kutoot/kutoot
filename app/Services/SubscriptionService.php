@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Enums\PaymentStatus;
 use App\Enums\SubscriptionStatus;
+use App\Enums\TransactionType;
 use App\Models\SubscriptionPlan;
 use App\Models\Transaction;
 use App\Models\User;
@@ -17,9 +19,9 @@ class SubscriptionService
     /**
      * Upgrade (or purchase) a plan for the user.
      * Expires existing active subscriptions and creates a new one.
-     * Creates a transaction record and awards bonus stamps if user has a primary campaign set.
+     * If a paid transaction is provided (from Razorpay checkout), use it instead of creating a new one.
      */
-    public function upgradePlan(User $user, int $planId): UserSubscription
+    public function upgradePlan(User $user, int $planId, ?Transaction $paidTransaction = null): UserSubscription
     {
         // Expire existing active subscriptions
         $user->subscriptions()->where('status', SubscriptionStatus::Active)->update([
@@ -35,18 +37,24 @@ class SubscriptionService
             'expires_at' => $plan?->duration_days ? now()->addDays($plan->duration_days) : null,
         ]);
 
-        // Record plan upgrade transaction
-        $planPrice = (float) ($plan?->price ?? 0);
-        $transaction = Transaction::create([
-            'user_id' => $user->id,
-            'amount' => $planPrice,
-            'original_bill_amount' => $planPrice,
-            'total_amount' => $planPrice,
-            'payment_status' => 'completed',
-            'payment_gateway' => 'plan_upgrade',
-            'payment_id' => 'PLAN-'.$planId.'-'.now()->timestamp,
-            'commission_amount' => 0,
-        ]);
+        // Use existing paid transaction or create a record for free plan upgrades
+        if ($paidTransaction) {
+            $paidTransaction->update(['payment_status' => PaymentStatus::Completed]);
+            $transaction = $paidTransaction;
+        } else {
+            $planPrice = (float) ($plan?->price ?? 0);
+            $transaction = Transaction::create([
+                'user_id' => $user->id,
+                'amount' => $planPrice,
+                'original_bill_amount' => $planPrice,
+                'total_amount' => $planPrice,
+                'payment_status' => PaymentStatus::Completed,
+                'payment_gateway' => 'plan_upgrade',
+                'payment_id' => 'PLAN-'.$planId.'-'.now()->timestamp,
+                'type' => TransactionType::PlanPurchase,
+                'commission_amount' => 0,
+            ]);
+        }
 
         if ($plan && $plan->stamps_on_purchase > 0 && $user->primary_campaign_id) {
             $this->stampService->awardStampsForPlanPurchase($user, $plan, transaction: $transaction);
@@ -111,9 +119,10 @@ class SubscriptionService
                         'amount' => (float) ($plan->price ?? 0),
                         'original_bill_amount' => (float) ($plan->price ?? 0),
                         'total_amount' => (float) ($plan->price ?? 0),
-                        'payment_status' => 'completed',
+                        'payment_status' => PaymentStatus::Completed,
                         'payment_gateway' => 'plan_upgrade',
                         'payment_id' => 'PLAN-'.$plan->id.'-'.now()->timestamp,
+                        'type' => TransactionType::PlanPurchase,
                         'commission_amount' => 0,
                     ]);
                 }

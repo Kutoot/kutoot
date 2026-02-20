@@ -34,12 +34,16 @@ test('otp can be sent to a valid mobile', function () {
     expect($user->otp_code)->not->toBeNull();
 });
 
-test('otp send fails for non-existent user', function () {
+test('otp send auto-creates non-existent user', function () {
     $response = $this->post('/otp-login/send', [
         'identifier' => 'nobody@example.com',
     ]);
 
-    $response->assertSessionHasErrors('identifier');
+    $response->assertRedirect();
+
+    $user = User::where('email', 'nobody@example.com')->first();
+    expect($user)->not->toBeNull()
+        ->and($user->otp_code)->not->toBeNull();
 });
 
 test('otp verification logs in the user', function () {
