@@ -68,7 +68,7 @@ export default function Index({ auth, plans, currentSubscription, primaryCampaig
                 description: `Upgrade to ${plan.name}`,
                 order_id: order.id,
                 handler: function (response) {
-                    router.post(route('subscriptions.verifyPlanPayment', transaction_id), {
+                    router.post(route('subscriptions.verify-payment', transaction_id), {
                         razorpay_payment_id: response.razorpay_payment_id,
                         razorpay_order_id: response.razorpay_order_id,
                         razorpay_signature: response.razorpay_signature,
