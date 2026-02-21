@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\TransactionType;
+use App\Models\SubscriptionPlan;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -16,9 +17,26 @@ class TransactionController extends Controller
         // Fetch subscription/plan purchase transactions
         $subscriptionTransactions = $user->transactions()
             ->where('type', TransactionType::PlanPurchase)
-            ->with('subscription')
             ->latest()
             ->paginate(20, ['*'], 'sub_page');
+
+        // Pre-load plan names for subscription transactions via idempotency key
+        $planIds = $subscriptionTransactions
+            ->map(function ($t) {
+                // idempotency_key format: plan_{userId}_{planId}_{uuid}
+                if ($t->idempotency_key && preg_match('/^plan_\d+_(\d+)_/', $t->idempotency_key, $matches)) {
+                    return (int) $matches[1];
+                }
+
+                return null;
+            })
+            ->filter()
+            ->unique()
+            ->values();
+
+        $planNames = $planIds->isNotEmpty()
+            ? SubscriptionPlan::whereIn('id', $planIds)->pluck('name', 'id')
+            : collect();
 
         // Fetch coupon redemption transactions
         $couponTransactions = $user->transactions()
@@ -27,19 +45,26 @@ class TransactionController extends Controller
             ->latest()
             ->paginate(20, ['*'], 'coupon_page');
 
-        $subscriptionData = $subscriptionTransactions->map(fn ($t) => [
-            'id' => $t->id,
-            'type' => 'subscription',
-            'plan_name' => $t->subscription?->plan?->name ?? 'N/A',
-            'amount' => (float) $t->original_bill_amount,
-            'gst_amount' => (float) ($t->gst_amount ?? 0),
-            'total_amount' => (float) $t->total_amount,
-            'payment_status' => $t->payment_status->getLabel(),
-            'payment_method' => $t->payment_gateway,
-            'payment_id' => $t->payment_id,
-            'created_at' => $t->created_at->format('M d, Y H:i'),
-            'created_at_human' => $t->created_at->diffForHumans(),
-        ]);
+        $subscriptionData = $subscriptionTransactions->map(function ($t) use ($planNames) {
+            $planName = 'N/A';
+            if ($t->idempotency_key && preg_match('/^plan_\d+_(\d+)_/', $t->idempotency_key, $matches)) {
+                $planName = $planNames[(int) $matches[1]] ?? 'N/A';
+            }
+
+            return [
+                'id' => $t->id,
+                'type' => 'subscription',
+                'plan_name' => $planName,
+                'amount' => (float) $t->original_bill_amount,
+                'gst_amount' => (float) ($t->gst_amount ?? 0),
+                'total_amount' => (float) $t->total_amount,
+                'payment_status' => $t->payment_status->getLabel(),
+                'payment_method' => $t->payment_gateway,
+                'payment_id' => $t->payment_id,
+                'created_at' => $t->created_at->format('M d, Y H:i'),
+                'created_at_human' => $t->created_at->diffForHumans(),
+            ];
+        });
 
         $couponData = $couponTransactions->map(fn ($t) => [
             'id' => $t->id,
