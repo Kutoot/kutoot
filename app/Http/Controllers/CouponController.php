@@ -65,7 +65,6 @@ class CouponController extends Controller
             ] : null,
             'availableCampaigns' => $availableCampaigns,
             'isLoggedIn' => (bool) $user,
-            'appDebug' => ! app()->isProduction(),
             'maxRedeemableAmount' => $maxRedeemableAmount,
             'remainingRedeemAmount' => $remainingRedeemAmount,
         ]);
@@ -151,36 +150,7 @@ class CouponController extends Controller
                     'total_paid' => $grandTotal,
                 ];
 
-                // 5. Non-production mode: skip payment gateway and auto-complete
-                if (! app()->isProduction()) {
-                    $transaction->update([
-                        'payment_status' => PaymentStatus::Paid,
-                        'payment_id' => 'debug_'.uniqid(),
-                    ]);
-
-                    // Complete coupon redemption
-                    if ($transaction->coupon_id) {
-                        $coupon_model = DiscountCoupon::find($transaction->coupon_id);
-                        if ($coupon_model) {
-                            $this->redemptionService->redeemCoupon($user, $coupon_model, $transaction, $financials);
-                        }
-                    }
-
-                    // Award stamps
-                    $this->stampService->awardStampsForBill($transaction);
-
-                    // Dispatch commission earned event
-                    if ($transaction->commission_amount > 0 && $user->primary_campaign_id) {
-                        $campaign = $user->primaryCampaign;
-                        if ($campaign) {
-                            CommissionEarned::dispatch($campaign, (float) $transaction->commission_amount);
-                        }
-                    }
-
-                    return redirect()->route('coupons.index')->with('success', 'Debug mode: Coupon redeemed without payment.');
-                }
-
-                // 6. Initiate payment order
+                // 5. Initiate payment order
                 $order = $this->paymentManager->driver()->createOrder($transaction);
                 $transaction->update(['razorpay_order_id' => $order['id']]);
 
@@ -226,8 +196,8 @@ class CouponController extends Controller
                     }
                 }
 
-                // Award stamps based on bill amount
-                $this->stampService->awardStampsForBill($transaction);
+                // Award stamps for coupon redemption
+                $this->stampService->awardStampsForCouponRedemption($transaction);
 
                 // Dispatch commission earned event for bounty tracking
                 if ($transaction->commission_amount > 0 && $user->primary_campaign_id) {

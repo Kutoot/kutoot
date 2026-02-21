@@ -3,7 +3,7 @@ import './bootstrap';
 
 import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
-import { createRoot } from 'react-dom/client';
+import { createRoot, hydrateRoot } from 'react-dom/client';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -15,11 +15,15 @@ createInertiaApp({
             import.meta.glob('./Pages/**/*.jsx'),
         ),
     setup({ el, App, props }) {
-        const root = createRoot(el);
+        if (import.meta.env.SSR) {
+            hydrateRoot(el, <App {...props} />);
+            return;
+        }
 
+        const root = createRoot(el);
         root.render(<App {...props} />);
     },
     progress: {
-        color: '#4B5563',
+        color: '#f08c10',
     },
 });

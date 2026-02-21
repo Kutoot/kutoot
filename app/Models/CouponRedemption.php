@@ -27,10 +27,10 @@ class CouponRedemption extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logAll()
+            ->logOnly(['discount_applied', 'total_paid'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
-            ->setDescriptionForEvent(fn (string $eventName): string => "Coupon redemption (saved ₹{$this->discount_applied}) was {$eventName}");
+            ->setDescriptionForEvent(fn (string $eventName): string => "Coupon redemption (saved u{20B9}{$this->discount_applied}) was {$eventName}");
     }
 
     /**

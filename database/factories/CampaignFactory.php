@@ -34,6 +34,12 @@ class CampaignFactory extends Factory
             'issued_stamps_cache' => 0,
             'marketing_bounty_percentage' => $this->faker->numberBetween(0, 40),
             'is_active' => true,
+            'code' => strtoupper($this->faker->unique()->lexify('CAMP???')),
+            'stamp_slots' => 6,
+            'stamp_slot_min' => 1,
+            'stamp_slot_max' => 49,
+            'stamp_editable_on_plan_purchase' => false,
+            'stamp_editable_on_coupon_redemption' => false,
         ];
     }
 }

@@ -3,47 +3,39 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\UpdateStampCodeRequest;
+use App\Models\Stamp;
+use App\Services\StampService;
+use Illuminate\Http\JsonResponse;
+use InvalidArgumentException;
 
 class StampController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
-    }
+    public function __construct(protected StampService $stampService) {}
 
     /**
-     * Store a newly created resource in storage.
+     * Update a stamp's code with user-selected slot values.
      */
-    public function store(Request $request)
+    public function updateCode(UpdateStampCodeRequest $request, Stamp $stamp): JsonResponse
     {
-        //
-    }
+        try {
+            $stamp = $this->stampService->updateStampCode(
+                $stamp,
+                $request->validated('slot_values'),
+            );
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+            return response()->json([
+                'message' => 'Stamp code updated successfully.',
+                'stamp' => [
+                    'id' => $stamp->id,
+                    'code' => $stamp->code,
+                    'editable_until' => $stamp->editable_until?->toISOString(),
+                ],
+            ]);
+        } catch (InvalidArgumentException $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 422);
+        }
     }
 }

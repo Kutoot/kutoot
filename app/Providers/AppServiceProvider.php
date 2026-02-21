@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Contracts\SmsContract;
 use App\Services\Sms\SmsManager;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Vite;
@@ -13,9 +14,6 @@ use Opcodes\LogViewer\Facades\LogViewer;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
         $this->app->singleton(SmsContract::class, function ($app) {
@@ -23,15 +21,28 @@ class AppServiceProvider extends ServiceProvider
         });
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
+        // Vite prefetching for faster page transitions
         Vite::prefetch(concurrency: 3);
 
+        // Prevent mass-assignment protection (app uses validated form requests)
         Model::unguard();
+
+        // Enable strict mode in ALL environments to catch N+1 queries early
         Model::shouldBeStrict(! $this->app->isProduction());
+
+        // Prevent lazy loading in production too (log instead of throw)
+        if ($this->app->isProduction()) {
+            Model::preventLazyLoading();
+            Model::handleLazyLoadingViolationUsing(function ($model, $relation) {
+                $class = get_class($model);
+                logger()->warning("Lazy loading detected: {$class}::{$relation}");
+            });
+        }
+
+        // Disable destructive DB commands in production
+        DB::prohibitDestructiveCommands($this->app->isProduction());
 
         // Intercept all outgoing mail in non-production environments
         if (! $this->app->isProduction()) {
@@ -39,8 +50,9 @@ class AppServiceProvider extends ServiceProvider
         }
 
         LogViewer::auth(function ($request) {
-            return true; // Allow access to log viewer for all users
+            return true;
         });
+
         Gate::before(static function ($user, $ability) {
             return $user->hasRole('Super Admin') ? true : null;
         });

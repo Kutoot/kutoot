@@ -75,6 +75,47 @@ export default function Show({ auth, campaign, bountyMeter, collectedCommission,
                                             <span className="block text-xs text-gray-400">Target: {campaign.stamp_target}</span>
                                         </div>
                                     </div>
+
+                                    {/* Stamp Code Configuration */}
+                                    {campaign.stamp_config && (
+                                        <div className="mt-6 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-4 border border-dashed border-purple-200">
+                                            <h4 className="text-sm font-display text-purple-700 mb-3 flex items-center gap-2">
+                                                🎰 Stamp Code Format
+                                            </h4>
+                                            <div className="space-y-2">
+                                                <div className="bg-white/60 rounded-lg p-3 text-center">
+                                                    <p className="text-xs text-purple-500 font-medium mb-1">Sample Code</p>
+                                                    <p className="font-mono text-lg font-bold text-purple-700">{campaign.stamp_config.sample_code}</p>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2 text-xs">
+                                                    <div className="bg-white/60 rounded-lg p-2">
+                                                        <span className="text-purple-500">Slots:</span>
+                                                        <span className="ml-1 font-bold text-purple-700">{campaign.stamp_config.slots}</span>
+                                                    </div>
+                                                    <div className="bg-white/60 rounded-lg p-2">
+                                                        <span className="text-purple-500">Range:</span>
+                                                        <span className="ml-1 font-bold text-purple-700">{campaign.stamp_config.min} – {campaign.stamp_config.max}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="bg-white/60 rounded-lg p-2 text-xs text-center">
+                                                    <span className="text-purple-500">Possible Combinations:</span>
+                                                    <span className="ml-1 font-bold text-purple-700">{campaign.stamp_config.possible_combinations}</span>
+                                                </div>
+                                                <div className="flex flex-wrap gap-2 mt-1">
+                                                    {campaign.stamp_config.editable_on_plan_purchase && (
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-ticket-100 text-ticket-700">
+                                                            ⭐ Editable on Plan Purchase
+                                                        </span>
+                                                    )}
+                                                    {campaign.stamp_config.editable_on_coupon_redemption && (
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                                                            🎟️ Editable on Coupon Redemption
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="mt-6 flex flex-wrap gap-3">

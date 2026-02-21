@@ -46,6 +46,10 @@ return [
      |
      */
 
+    'stamps' => [
+        'edit_duration_minutes' => env('STAMP_EDIT_DURATION_MINUTES', 15),
+    ],
+
     'sms' => [
         'driver' => env('SMS_DRIVER', 'log'),
 

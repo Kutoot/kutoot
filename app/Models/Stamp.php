@@ -20,12 +20,13 @@ class Stamp extends Model
         'transaction_id',
         'code',
         'source',
+        'editable_until',
     ];
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logAll()
+            ->logOnly(['code', 'source', 'campaign_id'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->setDescriptionForEvent(fn (string $eventName): string => "Stamp ({$this->code}) was {$eventName}");
@@ -38,7 +39,13 @@ class Stamp extends Model
     {
         return [
             'source' => StampSource::class,
+            'editable_until' => 'datetime',
         ];
+    }
+
+    public function isEditable(): bool
+    {
+        return $this->editable_until !== null && $this->editable_until->isFuture();
     }
 
     /**

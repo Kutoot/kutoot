@@ -83,7 +83,6 @@ class SubscriptionController extends Controller
             'primaryCampaignId' => $user?->primary_campaign_id,
             'availableCampaigns' => $availableCampaigns,
             'isLoggedIn' => (bool) $user,
-            'appDebug' => ! app()->isProduction(),
         ]);
     }
 
@@ -137,26 +136,6 @@ class SubscriptionController extends Controller
             'idempotency_key' => $idempotencyKey,
             'commission_amount' => 0,
         ]);
-
-        // Non-production mode: skip payment gateway and auto-complete
-        if (! app()->isProduction()) {
-            $transaction->update([
-                'payment_status' => PaymentStatus::Paid,
-                'payment_id' => 'debug_'.uniqid(),
-            ]);
-
-            $this->subscriptionService->upgradePlan($user, $plan->id, $transaction);
-            $user->refresh();
-
-            if (! $user->primary_campaign_id) {
-                return back()->with([
-                    'success' => 'Debug mode: Upgraded to '.$plan->name.' successfully! Please select your primary campaign.',
-                    'needsCampaignSelection' => true,
-                ]);
-            }
-
-            return back()->with('success', 'Debug mode: Upgraded to '.$plan->name.' successfully!');
-        }
 
         // Create Razorpay order
         try {

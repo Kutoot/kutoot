@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\CampaignController;
 use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\MerchantLocationController;
+use App\Http\Controllers\Api\StampController;
 use App\Http\Controllers\RazorpayWebhookController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -23,4 +24,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::get('/coupons', [CouponController::class, 'index']);
     Route::post('/coupons/{coupon}/redeem', [CouponController::class, 'redeem']);
+
+    Route::patch('/stamps/{stamp}/code', [StampController::class, 'updateCode'])
+        ->name('api.stamps.update-code');
 });

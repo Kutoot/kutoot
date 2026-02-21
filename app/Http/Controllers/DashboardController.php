@@ -54,7 +54,7 @@ class DashboardController extends Controller
             ]);
 
         $stamps = $user->stamps()
-            ->with(['campaign:id,reward_name', 'transaction:id,amount,original_bill_amount'])
+            ->with(['campaign:id,reward_name,code,stamp_slots,stamp_slot_min,stamp_slot_max', 'transaction:id,amount,original_bill_amount'])
             ->latest()
             ->limit(20)
             ->get()
@@ -65,6 +65,13 @@ class DashboardController extends Controller
                 'campaign_name' => $s->campaign?->reward_name,
                 'bill_amount' => (float) ($s->transaction?->original_bill_amount ?: $s->transaction?->amount ?? 0),
                 'created_at' => $s->created_at->diffForHumans(),
+                'editable_until' => $s->editable_until?->toISOString(),
+                'is_editable' => $s->isEditable(),
+                'stamp_config' => $s->campaign && $s->campaign->hasStampConfig() ? [
+                    'slots' => $s->campaign->stamp_slots,
+                    'min' => $s->campaign->stamp_slot_min,
+                    'max' => $s->campaign->stamp_slot_max,
+                ] : null,
             ]);
 
         $activityLogs = Activity::causedBy($user)

@@ -3,17 +3,23 @@ import Dropdown from '@/Components/Dropdown';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
 import { Link, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function AuthenticatedLayout({ header, children }) {
     const user = usePage().props.auth.user;
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
+    const mobileMenuRef = useRef(null);
+
+    // Close mobile menu on route change
+    useEffect(() => {
+        setShowingNavigationDropdown(false);
+    }, [children]);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-lucky-50 via-white to-ticket-50 confetti-bg">
-            <nav className="border-b-2 border-lucky-200 bg-white/90 backdrop-blur-sm shadow-sm">
+            <nav className="sticky top-0 z-50 border-b-2 border-lucky-200 bg-white/95 backdrop-blur-md shadow-sm">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="flex h-16 justify-between">
                         <div className="flex">
@@ -23,7 +29,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                 </Link>
                             </div>
 
-                            <div className="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                            <div className="hidden space-x-6 sm:-my-px sm:ms-10 sm:flex">
                                 {user && (
                                     <NavLink href={route('dashboard')} active={route().current('dashboard')}>
                                         🎯 Dashboard
@@ -149,10 +155,8 @@ export default function AuthenticatedLayout({ header, children }) {
                 </div>
 
                 <div
-                    className={
-                        (showingNavigationDropdown ? 'block' : 'hidden') +
-                        ' sm:hidden'
-                    }
+                    ref={mobileMenuRef}
+                    className={`sm:hidden overflow-hidden transition-all duration-300 ease-in-out ${showingNavigationDropdown ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}
                 >
                     <div className="space-y-1 pb-3 pt-2">
                         {user && (

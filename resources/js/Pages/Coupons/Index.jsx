@@ -8,16 +8,21 @@ import TextInput from '@/Components/TextInput';
 import Modal from '@/Components/Modal';
 import SecondaryButton from '@/Components/SecondaryButton';
 import CurrencySymbol from '@/Components/CurrencySymbol';
-import useRazorpay from '@/Hooks/useRazorpay';
-
+import EmptyState from '@/Components/EmptyState';
+import PaymentBreakdown from '@/Components/PaymentBreakdown';
+import ConfirmationModal from '@/Components/ConfirmationModal';
 
 export default function Index({ auth, coupons, locations, planName, stampsPerHundred, primaryCampaign, availableCampaigns, remainingRedeemAmount, maxRedeemableAmount }) {
-    const { platform_fee, gst_rate, platform_fee_type, appDebug } = usePage().props;
+    const { platform_fee, gst_rate, platform_fee_type, flash } = usePage().props;
 
     const [confirmingRedemption, setConfirmingRedemption] = useState(false);
     const [selectedCoupon, setSelectedCoupon] = useState(null);
+    const [modalStep, setModalStep] = useState(1); // 1=location, 2=amount, 3=review
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [successData, setSuccessData] = useState(null);
 
-    const { data, setData, post, processing, errors, reset } = useForm({
+    const { data, setData, processing, errors, reset } = useForm({
         merchant_location_id: '',
         amount: '',
         campaign_id: primaryCampaign?.id || '',
@@ -25,17 +30,13 @@ export default function Index({ auth, coupons, locations, planName, stampsPerHun
 
     const selectedLocationName = locations.find(l => String(l.id) === String(data.merchant_location_id))?.name;
 
-    const { initiatePayment: razorpayInitiate, isLoading: razorpayLoading } = useRazorpay({
-        isProduction: !appDebug,
-        user: auth.user,
-    });
-
-
     const confirmRedemption = (coupon) => {
         setSelectedCoupon(coupon);
         setConfirmingRedemption(true);
+        setModalStep(1);
         if (coupon.merchant_location_id) {
             setData('merchant_location_id', coupon.merchant_location_id);
+            setModalStep(2); // skip location selection if pre-set
         } else {
             setData('merchant_location_id', '');
         }
@@ -44,45 +45,26 @@ export default function Index({ auth, coupons, locations, planName, stampsPerHun
     const closeModal = () => {
         setConfirmingRedemption(false);
         setSelectedCoupon(null);
+        setModalStep(1);
+        setIsProcessing(false);
         reset();
     };
 
-    const initiatePayment = (e) => {
-        e.preventDefault();
-
-        const couponId = selectedCoupon?.id;
-        if (!couponId) return;
-
-        razorpayInitiate({
-            orderRoute: route('coupons.redeem', couponId),
-            orderData: { ...data },
-            verifyRoute: route('coupons.verify-payment', '__TRANSACTION_ID__'),
-            description: `Payment for ${selectedCoupon.title}`,
-            onDebugSuccess: () => closeModal(),
-        });
-    };
-
-    // Override initiatePayment to handle the transaction_id from the order response
     const handlePayment = async (e) => {
         e.preventDefault();
 
         const couponId = selectedCoupon?.id;
         const formData = { ...data };
-
         if (!couponId) return;
 
-        // Non-production mode: use standard Inertia form post (returns redirect)
-        if (appDebug) {
-            router.post(route('coupons.redeem', couponId), formData, {
-                onSuccess: () => closeModal(),
-                onError: (errs) => console.error('Redeem errors:', errs),
-            });
-            return;
-        }
+        setIsProcessing(true);
 
+        // Fetch order via JSON, then open Razorpay popup
         try {
             const response = await fetch(route('coupons.redeem', couponId), {
-                method: 'POST',                credentials: 'same-origin',                headers: {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
@@ -94,13 +76,12 @@ export default function Index({ auth, coupons, locations, planName, stampsPerHun
 
             if (response.ok) {
                 closeModal();
-                // Use the hook's openCheckout with the real transaction_id for verification
                 const { order, transaction_id } = result;
                 const options = {
                     key: order.key,
                     amount: order.amount,
                     currency: order.currency,
-                    name: "Kutoot",
+                    name: 'Kutoot',
                     description: `Payment for ${selectedCoupon.title}`,
                     order_id: order.id,
                     handler: function (response) {
@@ -108,25 +89,34 @@ export default function Index({ auth, coupons, locations, planName, stampsPerHun
                             razorpay_payment_id: response.razorpay_payment_id,
                             razorpay_order_id: response.razorpay_order_id,
                             razorpay_signature: response.razorpay_signature,
+                        }, {
+                            onSuccess: () => {
+                                setShowSuccess(true);
+                                setSuccessData({ stamps: breakdown.estimatedStamps });
+                            },
                         });
                     },
                     prefill: {
                         name: auth.user.name,
                         email: auth.user.email,
                     },
-                    theme: {
-                        color: "#f08c10",
+                    theme: { color: '#f08c10' },
+                    modal: {
+                        ondismiss: () => setIsProcessing(false),
                     },
                 };
 
                 const rzp = new window.Razorpay(options);
+                rzp.on('payment.failed', () => setIsProcessing(false));
                 rzp.open();
             } else {
                 alert(result.error || 'Something went wrong');
+                setIsProcessing(false);
             }
         } catch (error) {
             console.error('Payment initiation failed', error);
             alert('Payment initiation failed. Please try again.');
+            setIsProcessing(false);
         }
     };
 
@@ -143,9 +133,9 @@ export default function Index({ auth, coupons, locations, planName, stampsPerHun
                 discount = Math.min(discount, parseFloat(selectedCoupon.max_discount_amount));
             }
         }
+        discount = Math.min(discount, billAmount);
         const finalBill = Math.max(0, billAmount - discount);
         const fee = parseFloat(platform_fee);
-        // handle percentage fee if needed (frontend sync)
         const feeAmount = platform_fee_type === 'percentage' ? (billAmount * fee / 100) : fee;
         const gst = (feeAmount * gst_rate) / 100;
         const total = finalBill + feeAmount + gst;
@@ -156,6 +146,8 @@ export default function Index({ auth, coupons, locations, planName, stampsPerHun
 
     const breakdown = calculateBreakdown();
 
+    // Remaining balance progress
+    const balancePercent = maxRedeemableAmount > 0 ? Math.max(0, Math.min(100, (remainingRedeemAmount / maxRedeemableAmount) * 100)) : 0;
 
     return (
         <AuthenticatedLayout
@@ -164,71 +156,95 @@ export default function Index({ auth, coupons, locations, planName, stampsPerHun
         >
             <Head title="Coupons" />
 
-            <div className="py-8">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="py-6 sm:py-8">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+                    {/* Remaining Balance Bar */}
+                    {auth.user && remainingRedeemAmount !== undefined && (
+                        <div className="coupon-card p-4 sm:p-5 mb-6">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div>
+                                    <p className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                                        <span>💰</span> Remaining Redeemable Balance
+                                    </p>
+                                    <p className="text-xs text-gray-500 mt-0.5">
+                                        <CurrencySymbol />{parseFloat(remainingRedeemAmount).toFixed(2)} of <CurrencySymbol />{parseFloat(maxRedeemableAmount).toFixed(2)}
+                                    </p>
+                                </div>
+                                <div className="w-full sm:w-48">
+                                    <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                                        <div
+                                            className={`h-full rounded-full transition-all duration-1000 ${balancePercent > 50 ? 'bg-green-500' : balancePercent > 20 ? 'bg-amber-500' : 'bg-red-500'}`}
+                                            style={{ width: `${balancePercent}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Coupon Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                         {coupons.data.length > 0 ? (
                             coupons.data.map((coupon) => (
-                                <div key={coupon.id} className="coupon-card overflow-hidden flex flex-col hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                                    <div className="p-6 flex-grow">
-                                        <span className="inline-block px-3 py-1 text-xs font-bold text-lucky-700 bg-lucky-100 rounded-full mb-3 border border-lucky-200">
-                                            {coupon.merchant_location ? coupon.merchant_location.branch_name : '🌐 Global Coupon'}
-                                        </span>
-                                        <h3 className="font-display text-lg text-gray-900 mb-1">{coupon.title}</h3>
-                                        <p className="text-gray-500 text-sm mb-4">{coupon.description}</p>
+                                <div key={coupon.id} className="coupon-card overflow-hidden flex flex-col hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group">
+                                    <div className="p-5 sm:p-6 flex-grow">
+                                        {/* Merchant badge */}
+                                        <div className="flex items-center justify-between mb-3">
+                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold text-lucky-700 bg-lucky-100 rounded-full border border-lucky-200">
+                                                {coupon.merchant_location ? (
+                                                    <>📍 {coupon.merchant_location.branch_name}</>
+                                                ) : (
+                                                    <>🌐 All Stores</>
+                                                )}
+                                            </span>
+                                            {/* Discount tag */}
+                                            <span className="inline-flex items-center px-2.5 py-1 text-xs font-bold text-white bg-gradient-to-r from-green-500 to-emerald-500 rounded-full shadow-sm">
+                                                {coupon.discount_type === 'percentage' ? `${coupon.discount_value}% OFF` : <><CurrencySymbol />{coupon.discount_value} OFF</>}
+                                            </span>
+                                        </div>
 
-                                        <div className="bg-gradient-to-br from-lucky-50 to-ticket-50 p-4 rounded-xl text-sm text-gray-700 border border-dashed border-lucky-200">
-                                            <div className="flex justify-between mb-2 pb-2 border-b border-dashed border-lucky-100">
-                                                <span className="text-gray-500">Code:</span>
-                                                <span className="font-mono font-bold text-lucky-700 bg-lucky-100 px-2 py-0.5 rounded">{coupon.code}</span>
+                                        <h3 className="font-display text-lg text-gray-900 mb-1 group-hover:text-lucky-700 transition-colors">{coupon.title}</h3>
+                                        {coupon.description && (
+                                            <p className="text-gray-500 text-sm mb-4 line-clamp-2">{coupon.description}</p>
+                                        )}
+
+                                        {/* Info grid */}
+                                        <div className="bg-gradient-to-br from-lucky-50/50 to-ticket-50/50 p-3 rounded-xl text-sm border border-lucky-100 space-y-2">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-gray-500 text-xs">Code</span>
+                                                <span className="font-mono font-bold text-lucky-700 bg-lucky-100 px-2 py-0.5 rounded text-xs">{coupon.code}</span>
                                             </div>
-                                            <div className="flex justify-between">
-                                                <span className="text-gray-500">Value:</span>
-                                                <span className="font-bold text-ticket-600">
-                                                    {coupon.discount_type === 'percentage' ? `${coupon.discount_value}% Off` : <><CurrencySymbol />{coupon.discount_value} Off</>}
-                                                </span>
-                                            </div>
-                                            {coupon.max_discount_amount && (
-                                                <div className="flex justify-between mt-2 pt-2 border-t border-dashed border-lucky-100">
-                                                    <span className="text-gray-500">Max Savings:</span>
-                                                    <span className="font-bold text-green-600">
-                                                        <CurrencySymbol />{parseFloat(coupon.max_discount_amount).toFixed(2)}
+                                            {(coupon.max_discount_amount || coupon.discount_type === 'fixed') && (
+                                                <div className="flex justify-between items-center pt-1 border-t border-dashed border-lucky-100">
+                                                    <span className="text-gray-500 text-xs">Max Savings</span>
+                                                    <span className="font-bold text-green-600 text-xs">
+                                                        <CurrencySymbol />{parseFloat(coupon.max_discount_amount || coupon.discount_value).toFixed(2)}
                                                     </span>
                                                 </div>
                                             )}
-                                            {!coupon.max_discount_amount && coupon.discount_type === 'fixed' && (
-                                                <div className="flex justify-between mt-2 pt-2 border-t border-dashed border-lucky-100">
-                                                    <span className="text-gray-500">Max Savings:</span>
-                                                    <span className="font-bold text-green-600">
-                                                        <CurrencySymbol />{parseFloat(coupon.discount_value).toFixed(2)}
+                                            {coupon.min_order_value > 0 && (
+                                                <div className="flex justify-between items-center pt-1 border-t border-dashed border-lucky-100">
+                                                    <span className="text-gray-500 text-xs">Min Order</span>
+                                                    <span className="font-bold text-gray-700 text-xs">
+                                                        <CurrencySymbol />{parseFloat(coupon.min_order_value).toFixed(0)}
                                                     </span>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
-                                    {/* Remaining balance info */}
-                                    {auth.user && remainingRedeemAmount !== undefined && (
-                                        <div className="px-6 pb-2">
-                                            <div className="text-xs text-gray-500 flex justify-between items-center">
-                                                <span>Remaining Balance:</span>
-                                                <span className={`font-bold ${remainingRedeemAmount > 0 ? 'text-green-600' : 'text-red-500'}`}>
-                                                    <CurrencySymbol />{parseFloat(remainingRedeemAmount).toFixed(2)} / <CurrencySymbol />{parseFloat(maxRedeemableAmount).toFixed(2)}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    )}
-                                    {/* Ticket perforation */}
-                                    <div className="flex justify-center gap-2 py-1.5 bg-gradient-to-r from-transparent via-lucky-50 to-transparent">
-                                        {[...Array(10)].map((_, i) => (
-                                            <div key={i} className="w-2 h-2 rounded-full bg-lucky-200" />
+
+                                    {/* Perforation */}
+                                    <div className="flex justify-center gap-1.5 py-1.5 bg-gradient-to-r from-transparent via-lucky-50 to-transparent">
+                                        {[...Array(12)].map((_, i) => (
+                                            <div key={i} className="w-1.5 h-1.5 rounded-full bg-lucky-200" />
                                         ))}
                                     </div>
-                                    <div className="bg-gradient-to-br from-lucky-50 to-ticket-50 px-6 py-4">
+
+                                    {/* Action */}
+                                    <div className="bg-gradient-to-br from-lucky-50 to-ticket-50 px-5 py-3 sm:px-6 sm:py-4">
                                         {auth.user ? (
-                                            <PrimaryButton
-                                                className="w-full justify-center"
-                                                onClick={() => confirmRedemption(coupon)}
-                                            >
+                                            <PrimaryButton className="w-full justify-center" onClick={() => confirmRedemption(coupon)}>
                                                 🎟️ Redeem Now
                                             </PrimaryButton>
                                         ) : (
@@ -243,159 +259,218 @@ export default function Index({ auth, coupons, locations, planName, stampsPerHun
                                 </div>
                             ))
                         ) : (
-                            <div className="col-span-full text-center py-16">
-                                <span className="text-5xl mb-4 block">🎭</span>
-                                <h3 className="font-display text-lg text-gray-900">No coupons available</h3>
-                                <p className="mt-1 text-sm text-gray-500">Upgrade your plan to unlock more rewards.</p>
+                            <div className="col-span-full">
+                                <div className="coupon-card">
+                                    <EmptyState
+                                        icon="🎭"
+                                        title="No coupons available"
+                                        description="Check back later or upgrade your plan to unlock more coupons and exclusive discounts."
+                                        actionLabel="Upgrade Plan"
+                                        actionHref={route('subscriptions.index')}
+                                    />
+                                </div>
                             </div>
                         )}
                     </div>
                 </div>
             </div>
 
-            <Modal show={confirmingRedemption} onClose={closeModal}>
-                <form onSubmit={handlePayment} className="p-6">
-                    <h2 className="font-display text-lg text-gray-900 flex items-center gap-2">
-                        <span>🎟️</span> Redeem: {selectedCoupon?.title}
-                        {selectedLocationName && (
-                            <span className="block text-sm font-normal text-lucky-600 mt-1">
-                                at {selectedLocationName}
-                            </span>
-                        )}
-                    </h2>
-
-                    <p className="mt-1 text-sm text-gray-600">
-                        To redeem this coupon, please select the store location and enter the bill amount.
-                    </p>
-
-                    <div className="mt-6">
-                        <InputLabel htmlFor="merchant_location_id" value="Store Location" />
-
-                        <select
-                            id="merchant_location_id"
-                            name="merchant_location_id"
-                            value={data.merchant_location_id}
-                            onChange={(e) => setData('merchant_location_id', e.target.value)}
-                            className="mt-1 block w-full border-lucky-200 focus:border-lucky-500 focus:ring-lucky-500 rounded-lg shadow-sm"
-                            required
-                        >
-                            <option value="">Select a location</option>
-                            {locations.map((loc) => (
-                                <option key={loc.id} value={loc.id}>
-                                    {loc.name}
-                                </option>
-                            ))}
-                        </select>
-
-                        <InputError message={errors.merchant_location_id} className="mt-2" />
-                    </div>
-
-                    <div className="mt-6">
-                        <InputLabel htmlFor="amount" value={<span>Bill Amount (<CurrencySymbol />)</span>} />
-
-
-                        <TextInput
-                            id="amount"
-                            type="number"
-                            step="0.01"
-                            name="amount"
-                            value={data.amount}
-                            onChange={(e) => setData('amount', e.target.value)}
-                            className="mt-1 block w-full"
-                            placeholder="0.00"
-                            required
-                        />
-                        <InputError message={errors.amount} className="mt-2" />
-                    </div>
-
-                    <div className="mt-6 bg-gradient-to-br from-lucky-50 to-ticket-50 p-4 rounded-xl border-2 border-dashed border-lucky-200">
-                        <div className="flex justify-between text-sm text-gray-700 mb-1">
-                            <span>Total Bill:</span>
-                            <span className="font-bold"><CurrencySymbol />{breakdown.billAmount.toFixed(2)}</span>
+            {/* Redemption Modal */}
+            <Modal show={confirmingRedemption} onClose={closeModal} maxWidth="lg">
+                <form onSubmit={handlePayment} className="p-5 sm:p-6">
+                    {/* Modal header */}
+                    <div className="flex items-center gap-3 mb-1">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-lucky-100 to-lucky-200 flex items-center justify-center flex-shrink-0">
+                            <span className="text-lg">🎟️</span>
                         </div>
-                        <div className="flex justify-between text-sm text-gray-700 mb-1">
-                            <span>Discount Applied:</span>
-                            <span className="font-bold text-green-600">- <CurrencySymbol />{breakdown.discount.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between text-sm font-bold text-lucky-700 mb-1 pt-1 border-t border-dashed border-lucky-200">
-                            <span>Bill after Discount:</span>
-                            <span><CurrencySymbol />{breakdown.finalBill.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between text-sm text-gray-700 mb-1">
-                            <span>Platform Fee:</span>
-                            <span><CurrencySymbol />{breakdown.feeAmount.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between text-sm text-gray-700 mb-2">
-                            <span>GST ({gst_rate}%):</span>
-                            <span><CurrencySymbol />{breakdown.gst.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between font-bold text-lucky-800 pt-2 border-t-2 border-dashed border-lucky-300">
-                            <span>💰 Total to Pay:</span>
-                            <span><CurrencySymbol />{breakdown.total.toFixed(2)}</span>
+                        <div>
+                            <h2 className="font-display text-lg text-gray-900">{selectedCoupon?.title}</h2>
+                            {selectedLocationName && (
+                                <p className="text-xs text-lucky-600">at {selectedLocationName}</p>
+                            )}
                         </div>
                     </div>
 
-                    {/* Stamps Earned Preview */}
-                    {breakdown.estimatedStamps > 0 && (
-                        <div className="mt-4 bg-green-50 p-3 rounded-lg border border-green-200 flex items-center gap-3">
-                            <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                                <span className="text-green-700 font-bold text-lg">{breakdown.estimatedStamps}</span>
-                            </div>
-                            <div>
-                                <p className="text-sm font-semibold text-green-800">
-                                    You'll earn {breakdown.estimatedStamps} stamp{breakdown.estimatedStamps !== 1 ? 's' : ''}
-                                </p>
-                                <p className="text-xs text-green-600">
-                                    {stampsPerHundred} stamp{stampsPerHundred !== 1 ? 's' : ''} per <CurrencySymbol />100 bill
-                                </p>
+                    {/* Step indicator */}
+                    <div className="flex items-center gap-2 my-5">
+                        <StepDot step={1} current={modalStep} label="Location" />
+                        <div className="flex-1 h-0.5 bg-gray-200 rounded"><div className={`h-full rounded transition-all duration-300 ${modalStep >= 2 ? 'bg-lucky-400 w-full' : 'w-0'}`} /></div>
+                        <StepDot step={2} current={modalStep} label="Bill" />
+                        <div className="flex-1 h-0.5 bg-gray-200 rounded"><div className={`h-full rounded transition-all duration-300 ${modalStep >= 3 ? 'bg-lucky-400 w-full' : 'w-0'}`} /></div>
+                        <StepDot step={3} current={modalStep} label="Pay" />
+                    </div>
+
+                    {/* Step 1: Location */}
+                    {modalStep === 1 && (
+                        <div className="space-y-4">
+                            <InputLabel htmlFor="merchant_location_id" value="Select Store Location" />
+                            <select
+                                id="merchant_location_id"
+                                value={data.merchant_location_id}
+                                onChange={(e) => setData('merchant_location_id', e.target.value)}
+                                className="block w-full border-lucky-200 focus:border-lucky-500 focus:ring-lucky-500 rounded-xl shadow-sm text-sm"
+                                required
+                            >
+                                <option value="">Choose a location...</option>
+                                {locations.map((loc) => (
+                                    <option key={loc.id} value={loc.id}>{loc.name}</option>
+                                ))}
+                            </select>
+                            <InputError message={errors.merchant_location_id} className="mt-1" />
+                            <div className="flex justify-end">
+                                <PrimaryButton
+                                    type="button"
+                                    disabled={!data.merchant_location_id}
+                                    onClick={() => setModalStep(2)}
+                                >
+                                    Next →
+                                </PrimaryButton>
                             </div>
                         </div>
                     )}
 
-                    {/* Primary Campaign Note / Selector */}
-                    {primaryCampaign ? (
-                        <div className="mt-4 bg-amber-50 p-3 rounded-lg border border-amber-200">
-                            <p className="text-sm text-amber-800">
-                                <span className="font-semibold">Stamps will be added to:</span>{' '}
-                                {primaryCampaign.reward_name}
-                            </p>
-                        </div>
-                    ) : availableCampaigns?.length > 0 ? (
-                        <div className="mt-4">
-                            <InputLabel htmlFor="campaign_id" value="Select Campaign for Stamps" />
-                            <select
-                                id="campaign_id"
-                                name="campaign_id"
-                                value={data.campaign_id}
-                                onChange={(e) => setData('campaign_id', e.target.value)}
-                                className="mt-1 block w-full border-lucky-200 focus:border-lucky-500 focus:ring-lucky-500 rounded-lg shadow-sm"
+                    {/* Step 2: Bill Amount */}
+                    {modalStep === 2 && (
+                        <div className="space-y-4">
+                            <InputLabel htmlFor="amount" value={<span>Enter Bill Amount (<CurrencySymbol />)</span>} />
+                            <TextInput
+                                id="amount"
+                                type="number"
+                                step="0.01"
+                                min="1"
+                                value={data.amount}
+                                onChange={(e) => setData('amount', e.target.value)}
+                                className="block w-full text-lg"
+                                placeholder="e.g. 500.00"
+                                autoFocus
                                 required
-                            >
-                                <option value="">Choose a campaign</option>
-                                {availableCampaigns.map((c) => (
-                                    <option key={c.id} value={c.id}>
-                                        {c.reward_name}
-                                    </option>
-                                ))}
-                            </select>
-                            <p className="mt-1 text-xs text-gray-500">
-                                No primary campaign set. Select which campaign should receive your stamps.
-                            </p>
-                            <InputError message={errors.campaign_id} className="mt-1" />
+                            />
+                            <InputError message={errors.amount} className="mt-1" />
+                            <div className="flex justify-between">
+                                <SecondaryButton type="button" onClick={() => setModalStep(1)}>← Back</SecondaryButton>
+                                <PrimaryButton
+                                    type="button"
+                                    disabled={!data.amount || parseFloat(data.amount) <= 0}
+                                    onClick={() => setModalStep(3)}
+                                >
+                                    Review →
+                                </PrimaryButton>
+                            </div>
                         </div>
-                    ) : null}
+                    )}
 
-                    <div className="mt-6 flex justify-end">
+                    {/* Step 3: Review & Pay */}
+                    {modalStep === 3 && (
+                        <div className="space-y-4">
+                            {/* Summary */}
+                            <div className="bg-gray-50 rounded-xl p-3 text-sm space-y-1">
+                                <div className="flex justify-between text-gray-500">
+                                    <span>📍 Location</span>
+                                    <span className="font-medium text-gray-900">{selectedLocationName}</span>
+                                </div>
+                                <div className="flex justify-between text-gray-500">
+                                    <span>🎫 Coupon</span>
+                                    <span className="font-medium text-gray-900">{selectedCoupon?.code}</span>
+                                </div>
+                            </div>
 
-                        <SecondaryButton onClick={closeModal}>Cancel</SecondaryButton>
-                        <PrimaryButton className="ms-3" disabled={processing}>
-                            {appDebug ? '🐛 Debug Redeem (Free)' : <>Pay <CurrencySymbol />{breakdown.total.toFixed(2)} & Redeem</>}
-                        </PrimaryButton>
-                    </div>
+                            {/* Breakdown */}
+                            <PaymentBreakdown
+                                billAmount={breakdown.billAmount}
+                                discount={breakdown.discount}
+                                finalBill={breakdown.finalBill}
+                                platformFee={breakdown.feeAmount}
+                                gst={breakdown.gst}
+                                gstRate={gst_rate}
+                                total={breakdown.total}
+                            />
 
+                            {/* Stamps preview */}
+                            {breakdown.estimatedStamps > 0 && (
+                                <div className="bg-green-50 p-3 rounded-xl border border-green-200 flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <span className="text-green-700 font-bold text-lg">{breakdown.estimatedStamps}</span>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-green-800">
+                                            You'll earn {breakdown.estimatedStamps} stamp{breakdown.estimatedStamps !== 1 ? 's' : ''}
+                                        </p>
+                                        <p className="text-xs text-green-600">
+                                            {stampsPerHundred} stamp{stampsPerHundred !== 1 ? 's' : ''} per <CurrencySymbol />100
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
 
+                            {/* Campaign */}
+                            {primaryCampaign ? (
+                                <div className="bg-amber-50 p-3 rounded-xl border border-amber-200">
+                                    <p className="text-sm text-amber-800">
+                                        <span className="font-semibold">Stamps go to:</span> {primaryCampaign.reward_name}
+                                    </p>
+                                </div>
+                            ) : availableCampaigns?.length > 0 ? (
+                                <div>
+                                    <InputLabel htmlFor="campaign_id" value="Select Campaign for Stamps" />
+                                    <select
+                                        id="campaign_id"
+                                        value={data.campaign_id}
+                                        onChange={(e) => setData('campaign_id', e.target.value)}
+                                        className="mt-1 block w-full border-lucky-200 focus:border-lucky-500 focus:ring-lucky-500 rounded-xl shadow-sm text-sm"
+                                        required
+                                    >
+                                        <option value="">Choose a campaign</option>
+                                        {availableCampaigns.map((c) => (
+                                            <option key={c.id} value={c.id}>{c.reward_name}</option>
+                                        ))}
+                                    </select>
+                                    <InputError message={errors.campaign_id} className="mt-1" />
+                                </div>
+                            ) : null}
+
+                            {/* Actions */}
+                            <div className="flex justify-between pt-2">
+                                <SecondaryButton type="button" onClick={() => setModalStep(2)}>← Back</SecondaryButton>
+                                <PrimaryButton disabled={isProcessing || processing} className="min-w-[140px] justify-center">
+                                    {isProcessing ? (
+                                        <span className="flex items-center gap-2">
+                                            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>
+                                        Processing...
+                                        </span>
+                                    ) : (
+                                        <>Pay <CurrencySymbol />{breakdown.total.toFixed(2)}</>
+                                    )}
+                                </PrimaryButton>
+                            </div>
+                        </div>
+                    )}
                 </form>
             </Modal>
+
+            {/* Success Modal */}
+            <ConfirmationModal
+                show={showSuccess}
+                onClose={() => { setShowSuccess(false); setSuccessData(null); }}
+                title="Coupon Redeemed!"
+                message="Your coupon has been successfully redeemed."
+                stampsEarned={successData?.stamps || 0}
+            />
         </AuthenticatedLayout>
+    );
+}
+
+function StepDot({ step, current, label }) {
+    const isActive = current >= step;
+    return (
+        <div className="flex flex-col items-center gap-1">
+            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                isActive ? 'lucky-gradient text-white shadow-md' : 'bg-gray-200 text-gray-500'
+            }`}>
+                {current > step ? (
+                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                ) : step}
+            </div>
+            <span className={`text-xs font-medium ${isActive ? 'text-lucky-600' : 'text-gray-400'}`}>{label}</span>
+        </div>
     );
 }

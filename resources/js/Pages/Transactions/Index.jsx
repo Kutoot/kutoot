@@ -1,24 +1,15 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import CurrencySymbol from '@/Components/CurrencySymbol';
+import StatusBadge from '@/Components/StatusBadge';
+import EmptyState from '@/Components/EmptyState';
 
 export default function Transactions({ auth, subscriptionTransactions, couponTransactions }) {
     const [activeTab, setActiveTab] = useState('subscriptions');
 
-    const getPaymentStatusColor = (status) => {
-        switch (status?.toLowerCase()) {
-            case 'paid':
-            case 'completed':
-                return 'text-green-600 bg-green-50';
-            case 'pending':
-                return 'text-yellow-600 bg-yellow-50';
-            case 'failed':
-                return 'text-red-600 bg-red-50';
-            default:
-                return 'text-gray-600 bg-gray-50';
-        }
-    };
+    const subCount = subscriptionTransactions.total || 0;
+    const couponCount = couponTransactions.total || 0;
 
     return (
         <AuthenticatedLayout
@@ -27,243 +18,63 @@ export default function Transactions({ auth, subscriptionTransactions, couponTra
         >
             <Head title="Transactions" />
 
-            <div className="py-8">
-                <div className="max-w-6xl mx-auto sm:px-6 lg:px-8">
+            <div className="py-6 sm:py-8">
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* Tab Navigation */}
-                    <div className="mb-6 flex gap-4 border-b border-gray-700">
-                        <button
+                    <div className="flex gap-2 mb-6 bg-white/80 backdrop-blur-sm rounded-full p-1.5 border-2 border-dashed border-lucky-200 shadow-sm w-fit">
+                        <TabButton
+                            active={activeTab === 'subscriptions'}
                             onClick={() => setActiveTab('subscriptions')}
-                            className={`pb-3 px-1 font-semibold transition-colors ${
-                                activeTab === 'subscriptions'
-                                    ? 'text-white border-b-2 border-orange-500'
-                                    : 'text-gray-400 hover:text-gray-300'
-                            }`}
-                        >
-                            🏆 Subscription Plans ({subscriptionTransactions.total || 0})
-                        </button>
-                        <button
+                            icon="🏆"
+                            label="Subscriptions"
+                            count={subCount}
+                        />
+                        <TabButton
+                            active={activeTab === 'coupons'}
                             onClick={() => setActiveTab('coupons')}
-                            className={`pb-3 px-1 font-semibold transition-colors ${
-                                activeTab === 'coupons'
-                                    ? 'text-white border-b-2 border-orange-500'
-                                    : 'text-gray-400 hover:text-gray-300'
-                            }`}
-                        >
-                            🎫 Coupon Redemptions ({couponTransactions.total || 0})
-                        </button>
+                            icon="🎫"
+                            label="Coupons"
+                            count={couponCount}
+                        />
                     </div>
 
-                    {/* Subscription Transactions Tab */}
+                    {/* Subscription Transactions */}
                     {activeTab === 'subscriptions' && (
-                        <div className="space-y-4">
+                        <div className="space-y-3">
                             {subscriptionTransactions.data.length > 0 ? (
-                                <>
-                                    <div className="space-y-3">
-                                        {subscriptionTransactions.data.map((transaction) => (
-                                            <div
-                                                key={transaction.id}
-                                                className="bg-gray-800 rounded-lg p-5 border border-gray-700 hover:border-orange-500 transition-colors"
-                                            >
-                                                <div className="flex justify-between items-start mb-3">
-                                                    <div>
-                                                        <h3 className="text-lg font-semibold text-white">
-                                                            {transaction.plan_name}
-                                                        </h3>
-                                                        <p className="text-sm text-gray-400 mt-1">
-                                                            {transaction.created_at}
-                                                        </p>
-                                                    </div>
-                                                    <span
-                                                        className={`px-3 py-1 rounded-full text-sm font-medium ${getPaymentStatusColor(
-                                                            transaction.payment_status
-                                                        )}`}
-                                                    >
-                                                        {transaction.payment_status}
-                                                    </span>
-                                                </div>
-
-                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
-                                                    <div className="bg-gray-700 rounded p-3">
-                                                        <p className="text-xs text-gray-400 uppercase tracking-wide">
-                                                            Amount
-                                                        </p>
-                                                        <p className="text-lg font-bold text-white mt-1">
-                                                            <CurrencySymbol />
-                                                            {transaction.amount.toFixed(2)}
-                                                        </p>
-                                                    </div>
-                                                    <div className="bg-gray-700 rounded p-3">
-                                                        <p className="text-xs text-gray-400 uppercase tracking-wide">
-                                                            GST
-                                                        </p>
-                                                        <p className="text-lg font-bold text-white mt-1">
-                                                            <CurrencySymbol />
-                                                            {transaction.gst_amount.toFixed(2)}
-                                                        </p>
-                                                    </div>
-                                                    <div className="bg-gray-700 rounded p-3">
-                                                        <p className="text-xs text-gray-400 uppercase tracking-wide">
-                                                            Total
-                                                        </p>
-                                                        <p className="text-lg font-bold text-orange-500 mt-1">
-                                                            <CurrencySymbol />
-                                                            {transaction.total_amount.toFixed(2)}
-                                                        </p>
-                                                    </div>
-                                                    <div className="bg-gray-700 rounded p-3">
-                                                        <p className="text-xs text-gray-400 uppercase tracking-wide">
-                                                            Method
-                                                        </p>
-                                                        <p className="text-sm font-semibold text-white mt-1 capitalize">
-                                                            {transaction.payment_method}
-                                                        </p>
-                                                    </div>
-                                                </div>
-
-                                                {transaction.payment_id && (
-                                                    <div className="bg-gray-700 rounded p-3">
-                                                        <p className="text-xs text-gray-400 uppercase tracking-wide">
-                                                            Payment ID
-                                                        </p>
-                                                        <p className="text-sm font-mono text-white mt-1">
-                                                            {transaction.payment_id}
-                                                        </p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    {/* Pagination would go here if implemented */}
-                                </>
+                                subscriptionTransactions.data.map((tx) => (
+                                    <TransactionCard key={tx.id} type="subscription" transaction={tx} />
+                                ))
                             ) : (
-                                <div className="text-center py-12">
-                                    <p className="text-gray-400 text-lg">No subscription transactions found</p>
-                                    <Link
-                                        href={route('subscriptions.index')}
-                                        className="text-orange-500 hover:text-orange-400 mt-4 inline-block"
-                                    >
-                                        Browse Plans →
-                                    </Link>
+                                <div className="coupon-card">
+                                    <EmptyState
+                                        icon="🏆"
+                                        title="No subscription payments yet"
+                                        description="Upgrade your plan to unlock more coupons and earn bonus stamps."
+                                        actionLabel="Browse Plans"
+                                        actionHref={route('subscriptions.index')}
+                                    />
                                 </div>
                             )}
                         </div>
                     )}
 
-                    {/* Coupon Redemption Transactions Tab */}
+                    {/* Coupon Transactions */}
                     {activeTab === 'coupons' && (
-                        <div className="space-y-4">
+                        <div className="space-y-3">
                             {couponTransactions.data.length > 0 ? (
-                                <>
-                                    <div className="space-y-3">
-                                        {couponTransactions.data.map((transaction) => (
-                                            <div
-                                                key={transaction.id}
-                                                className="bg-gray-800 rounded-lg p-5 border border-gray-700 hover:border-orange-500 transition-colors"
-                                            >
-                                                <div className="flex justify-between items-start mb-3">
-                                                    <div>
-                                                        <h3 className="text-lg font-semibold text-white">
-                                                            {transaction.coupon_title}
-                                                        </h3>
-                                                        <p className="text-sm text-gray-400 mt-1">
-                                                            📍 {transaction.merchant_location}
-                                                        </p>
-                                                        <p className="text-xs text-gray-500 mt-1">
-                                                            {transaction.created_at}
-                                                        </p>
-                                                    </div>
-                                                    <span
-                                                        className={`px-3 py-1 rounded-full text-sm font-medium ${getPaymentStatusColor(
-                                                            transaction.payment_status
-                                                        )}`}
-                                                    >
-                                                        {transaction.payment_status}
-                                                    </span>
-                                                </div>
-
-                                                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3">
-                                                    <div className="bg-gray-700 rounded p-3">
-                                                        <p className="text-xs text-gray-400 uppercase tracking-wide">
-                                                            Bill Amount
-                                                        </p>
-                                                        <p className="text-base font-bold text-white mt-1">
-                                                            <CurrencySymbol />
-                                                            {transaction.bill_amount.toFixed(2)}
-                                                        </p>
-                                                    </div>
-                                                    <div className="bg-green-900/30 rounded p-3 border border-green-700">
-                                                        <p className="text-xs text-green-400 uppercase tracking-wide">
-                                                            Discount
-                                                        </p>
-                                                        <p className="text-lg font-bold text-green-400 mt-1">
-                                                            -<CurrencySymbol />
-                                                            {transaction.discount_applied.toFixed(2)}
-                                                        </p>
-                                                    </div>
-                                                    <div className="bg-gray-700 rounded p-3">
-                                                        <p className="text-xs text-gray-400 uppercase tracking-wide">
-                                                            Platform Fee
-                                                        </p>
-                                                        <p className="text-base font-bold text-gray-300 mt-1">
-                                                            <CurrencySymbol />
-                                                            {transaction.platform_fee.toFixed(2)}
-                                                        </p>
-                                                    </div>
-                                                    <div className="bg-gray-700 rounded p-3">
-                                                        <p className="text-xs text-gray-400 uppercase tracking-wide">
-                                                            GST
-                                                        </p>
-                                                        <p className="text-base font-bold text-gray-300 mt-1">
-                                                            <CurrencySymbol />
-                                                            {transaction.gst_amount.toFixed(2)}
-                                                        </p>
-                                                    </div>
-                                                    <div className="bg-blue-900/30 rounded p-3 border border-blue-700">
-                                                        <p className="text-xs text-blue-400 uppercase tracking-wide">
-                                                            Paid Total
-                                                        </p>
-                                                        <p className="text-lg font-bold text-blue-400 mt-1">
-                                                            <CurrencySymbol />
-                                                            {transaction.total_paid.toFixed(2)}
-                                                        </p>
-                                                    </div>
-                                                </div>
-
-                                                <div className="bg-gray-700 rounded p-3">
-                                                    <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">
-                                                        Payment Details
-                                                    </p>
-                                                    <div className="grid grid-cols-2 gap-3">
-                                                        <div>
-                                                            <p className="text-xs text-gray-500">Method:</p>
-                                                            <p className="text-sm font-semibold text-white capitalize">
-                                                                {transaction.payment_method}
-                                                            </p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs text-gray-500">Payment ID:</p>
-                                                            <p className="text-sm font-mono text-gray-300">
-                                                                {transaction.payment_id}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    {/* Pagination would go here if implemented */}
-                                </>
+                                couponTransactions.data.map((tx) => (
+                                    <TransactionCard key={tx.id} type="coupon" transaction={tx} />
+                                ))
                             ) : (
-                                <div className="text-center py-12">
-                                    <p className="text-gray-400 text-lg">No coupon redemption transactions found</p>
-                                    <Link
-                                        href={route('coupons.index')}
-                                        className="text-orange-500 hover:text-orange-400 mt-4 inline-block"
-                                    >
-                                        Browse Coupons →
-                                    </Link>
+                                <div className="coupon-card">
+                                    <EmptyState
+                                        icon="🎫"
+                                        title="No coupon redemptions yet"
+                                        description="Redeem a coupon at a partner store to see your first transaction here."
+                                        actionLabel="Browse Coupons"
+                                        actionHref={route('coupons.index')}
+                                    />
                                 </div>
                             )}
                         </div>
@@ -271,5 +82,145 @@ export default function Transactions({ auth, subscriptionTransactions, couponTra
                 </div>
             </div>
         </AuthenticatedLayout>
+    );
+}
+
+function TabButton({ active, onClick, icon, label, count }) {
+    return (
+        <button
+            onClick={onClick}
+            className={`flex items-center gap-1.5 px-4 sm:px-5 py-2 rounded-full text-sm font-bold transition-all ${
+                active
+                    ? 'lucky-gradient text-white shadow-md'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-lucky-50'
+            }`}
+        >
+            <span>{icon}</span>
+            <span className="hidden sm:inline">{label}</span>
+            <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${
+                active ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600'
+            }`}>
+                {count}
+            </span>
+        </button>
+    );
+}
+
+function TransactionCard({ type, transaction: tx }) {
+    const [expanded, setExpanded] = useState(false);
+
+    if (type === 'subscription') {
+        return (
+            <div className="coupon-card overflow-hidden hover:shadow-lg transition-all duration-200">
+                <div className="p-4 sm:p-5">
+                    {/* Header row */}
+                    <div className="flex justify-between items-start mb-3">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-lucky-100 to-lucky-200 flex items-center justify-center flex-shrink-0">
+                                <span className="text-lg">🏆</span>
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-gray-900">{tx.plan_name}</h3>
+                                <p className="text-xs text-gray-400">{tx.created_at}</p>
+                            </div>
+                        </div>
+                        <StatusBadge status={tx.payment_status} />
+                    </div>
+
+                    {/* Quick summary */}
+                    <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                        <MetricBox label="Amount" value={<><CurrencySymbol />{tx.amount.toFixed(2)}</>} />
+                        <MetricBox label="GST" value={<><CurrencySymbol />{tx.gst_amount.toFixed(2)}</>} />
+                        <MetricBox label="Total Paid" value={<><CurrencySymbol />{tx.total_amount.toFixed(2)}</>} highlight />
+                    </div>
+
+                    {/* Expandable details */}
+                    <button
+                        onClick={() => setExpanded(!expanded)}
+                        className="mt-3 text-xs text-lucky-600 hover:text-lucky-700 font-medium flex items-center gap-1 transition-colors"
+                    >
+                        {expanded ? 'Hide' : 'Show'} details
+                        <svg className={`w-3.5 h-3.5 transition-transform ${expanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+
+                    {expanded && (
+                        <div className="mt-3 bg-lucky-50/50 rounded-xl p-3 space-y-1.5 text-sm border border-lucky-100">
+                            <DetailRow label="Payment Method" value={tx.payment_method} />
+                            {tx.payment_id && <DetailRow label="Payment ID" value={tx.payment_id} mono />}
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    // Coupon transaction
+    return (
+        <div className="coupon-card overflow-hidden hover:shadow-lg transition-all duration-200">
+            <div className="p-4 sm:p-5">
+                {/* Header row */}
+                <div className="flex justify-between items-start mb-3">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-ticket-100 to-ticket-200 flex items-center justify-center flex-shrink-0">
+                            <span className="text-lg">🎫</span>
+                        </div>
+                        <div className="min-w-0">
+                            <h3 className="font-bold text-gray-900 truncate">{tx.coupon_title}</h3>
+                            <p className="text-xs text-gray-500 truncate">📍 {tx.merchant_location}</p>
+                            <p className="text-xs text-gray-400">{tx.created_at}</p>
+                        </div>
+                    </div>
+                    <StatusBadge status={tx.payment_status} />
+                </div>
+
+                {/* Quick summary grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <MetricBox label="Bill Amount" value={<><CurrencySymbol />{tx.bill_amount.toFixed(2)}</>} />
+                    <MetricBox label="Discount" value={<>-<CurrencySymbol />{tx.discount_applied.toFixed(2)}</>} valueClass="text-green-600" />
+                    <MetricBox label="Fee + GST" value={<><CurrencySymbol />{(tx.platform_fee + tx.gst_amount).toFixed(2)}</>} />
+                    <MetricBox label="Total Paid" value={<><CurrencySymbol />{tx.total_paid.toFixed(2)}</>} highlight />
+                </div>
+
+                {/* Expandable details */}
+                <button
+                    onClick={() => setExpanded(!expanded)}
+                    className="mt-3 text-xs text-lucky-600 hover:text-lucky-700 font-medium flex items-center gap-1 transition-colors"
+                >
+                    {expanded ? 'Hide' : 'Show'} details
+                    <svg className={`w-3.5 h-3.5 transition-transform ${expanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+
+                {expanded && (
+                    <div className="mt-3 bg-lucky-50/50 rounded-xl p-3 space-y-1.5 text-sm border border-lucky-100">
+                        <DetailRow label="Platform Fee" value={<><CurrencySymbol />{tx.platform_fee.toFixed(2)}</>} />
+                        <DetailRow label="GST" value={<><CurrencySymbol />{tx.gst_amount.toFixed(2)}</>} />
+                        <DetailRow label="Payment Method" value={tx.payment_method} />
+                        {tx.payment_id && <DetailRow label="Payment ID" value={tx.payment_id} mono />}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+function MetricBox({ label, value, highlight = false, valueClass = '' }) {
+    return (
+        <div className={`rounded-xl p-2.5 sm:p-3 ${highlight ? 'bg-gradient-to-br from-lucky-50 to-lucky-100 border border-lucky-200' : 'bg-gray-50 border border-gray-100'}`}>
+            <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">{label}</p>
+            <p className={`text-sm sm:text-base font-bold mt-0.5 ${highlight ? 'text-lucky-700' : valueClass || 'text-gray-900'}`}>{value}</p>
+        </div>
+    );
+}
+
+function DetailRow({ label, value, mono = false }) {
+    return (
+        <div className="flex justify-between items-center">
+            <span className="text-gray-500">{label}</span>
+            <span className={`font-medium text-gray-900 ${mono ? 'font-mono text-xs' : 'capitalize'}`}>{value}</span>
+        </div>
     );
 }

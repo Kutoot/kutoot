@@ -41,10 +41,10 @@ class Transaction extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logAll()
+            ->logOnly(['payment_status', 'total_amount', 'type', 'payment_id'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
-            ->setDescriptionForEvent(fn (string $eventName): string => "Transaction of ₹{$this->total_amount} was {$eventName}");
+            ->setDescriptionForEvent(fn (string $eventName): string => "Transaction of u{20B9}{$this->total_amount} was {$eventName}");
     }
 
     /**

@@ -1,108 +1,45 @@
 {
-  "node_modules/laravel-vite-plugin/inertia-helpers/index.js": [],
-  "resources/css/app.css": [],
-  "resources/js/Components/ApplicationLogo.jsx": [
-    "/build/assets/ApplicationLogo-B2tGdv66.js"
-  ],
-  "resources/js/Components/BountyMeter.jsx": [
-    "/build/assets/Index-DwG712wT.js"
-  ],
-  "resources/js/Components/Checkbox.jsx": [
-    "/build/assets/Login-DJ8TiTYt.js"
-  ],
-  "resources/js/Components/CurrencySymbol.jsx": [
-    "/build/assets/CurrencySymbol-BQz5ZRGv.js"
-  ],
-  "resources/js/Components/DangerButton.jsx": [
-    "/build/assets/DeleteUserForm-DbrOds_3.js"
-  ],
-  "resources/js/Components/Dropdown.jsx": [
-    "/build/assets/AuthenticatedLayout-JzOoDiv3.js"
-  ],
-  "resources/js/Components/InputError.jsx": [
-    "/build/assets/TextInput-yXmXuxTf.js"
-  ],
-  "resources/js/Components/InputLabel.jsx": [
-    "/build/assets/InputLabel-CE_n4Upz.js"
-  ],
-  "resources/js/Components/Modal.jsx": [
-    "/build/assets/SecondaryButton-D1m0KP7f.js"
-  ],
-  "resources/js/Components/NavLink.jsx": [
-    "/build/assets/AuthenticatedLayout-JzOoDiv3.js"
-  ],
-  "resources/js/Components/PrimaryButton.jsx": [
-    "/build/assets/PrimaryButton-CCctEmCW.js"
-  ],
-  "resources/js/Components/ResponsiveNavLink.jsx": [
-    "/build/assets/AuthenticatedLayout-JzOoDiv3.js"
-  ],
-  "resources/js/Components/SecondaryButton.jsx": [
-    "/build/assets/SecondaryButton-D1m0KP7f.js"
-  ],
-  "resources/js/Components/TextInput.jsx": [
-    "/build/assets/TextInput-yXmXuxTf.js"
-  ],
-  "resources/js/Layouts/AuthenticatedLayout.jsx": [
-    "/build/assets/AuthenticatedLayout-JzOoDiv3.js"
-  ],
-  "resources/js/Layouts/GuestLayout.jsx": [
-    "/build/assets/GuestLayout-0v3_KDx7.js"
-  ],
-  "resources/js/Pages/Auth/ConfirmPassword.jsx": [
-    "/build/assets/ConfirmPassword-BfEErBKl.js"
-  ],
-  "resources/js/Pages/Auth/ForgotPassword.jsx": [
-    "/build/assets/ForgotPassword-DOlXFzC0.js"
-  ],
-  "resources/js/Pages/Auth/Login.jsx": [
-    "/build/assets/Login-DJ8TiTYt.js"
-  ],
-  "resources/js/Pages/Auth/OtpLogin.jsx": [
-    "/build/assets/OtpLogin-Dflvafet.js"
-  ],
-  "resources/js/Pages/Auth/Register.jsx": [
-    "/build/assets/Register-IxmvZNAH.js"
-  ],
-  "resources/js/Pages/Auth/ResetPassword.jsx": [
-    "/build/assets/ResetPassword-D9BKdvO2.js"
-  ],
-  "resources/js/Pages/Auth/VerifyEmail.jsx": [
-    "/build/assets/VerifyEmail-DlQ9II4F.js"
-  ],
-  "resources/js/Pages/Campaigns/Index.jsx": [
-    "/build/assets/Index-DwG712wT.js"
-  ],
-  "resources/js/Pages/Campaigns/Show.jsx": [
-    "/build/assets/Show-BBRaFOuf.js"
-  ],
-  "resources/js/Pages/Coupons/Index.jsx": [
-    "/build/assets/Index-CHZpdIS7.js"
-  ],
-  "resources/js/Pages/Dashboard.jsx": [
-    "/build/assets/Dashboard-vAGDc5mq.js"
-  ],
-  "resources/js/Pages/Executive/LinkQr.jsx": [
-    "/build/assets/LinkQr-CtYoyWyd.js"
-  ],
-  "resources/js/Pages/Profile/Edit.jsx": [
-    "/build/assets/Edit-BTOFzmAR.js"
-  ],
-  "resources/js/Pages/Profile/Partials/DeleteUserForm.jsx": [
-    "/build/assets/DeleteUserForm-DbrOds_3.js"
-  ],
-  "resources/js/Pages/Profile/Partials/UpdatePasswordForm.jsx": [
-    "/build/assets/UpdatePasswordForm-DCuo5InE.js"
-  ],
-  "resources/js/Pages/Profile/Partials/UpdateProfileInformationForm.jsx": [
-    "/build/assets/UpdateProfileInformationForm-DEn0FyXF.js"
-  ],
-  "resources/js/Pages/Subscriptions/Index.jsx": [
-    "/build/assets/Index-VN0xjuZr.js"
-  ],
-  "resources/js/Pages/Welcome.jsx": [
-    "/build/assets/Welcome-p32ixQMA.js"
-  ],
-  "resources/js/app.jsx": [],
-  "resources/js/bootstrap.js": []
+  "node_modules/@inertiajs/react/dist/index.esm.js": [],
+  "resources/js/Components/ApplicationLogo.jsx": [],
+  "resources/js/Components/BountyMeter.jsx": [],
+  "resources/js/Components/Checkbox.jsx": [],
+  "resources/js/Components/ConfirmationModal.jsx": [],
+  "resources/js/Components/CurrencySymbol.jsx": [],
+  "resources/js/Components/DangerButton.jsx": [],
+  "resources/js/Components/Dropdown.jsx": [],
+  "resources/js/Components/EmptyState.jsx": [],
+  "resources/js/Components/InputError.jsx": [],
+  "resources/js/Components/InputLabel.jsx": [],
+  "resources/js/Components/Modal.jsx": [],
+  "resources/js/Components/NavLink.jsx": [],
+  "resources/js/Components/PaymentBreakdown.jsx": [],
+  "resources/js/Components/PrimaryButton.jsx": [],
+  "resources/js/Components/ResponsiveNavLink.jsx": [],
+  "resources/js/Components/SecondaryButton.jsx": [],
+  "resources/js/Components/StatusBadge.jsx": [],
+  "resources/js/Components/TextInput.jsx": [],
+  "resources/js/Hooks/useRazorpay.js": [],
+  "resources/js/Layouts/AuthenticatedLayout.jsx": [],
+  "resources/js/Layouts/GuestLayout.jsx": [],
+  "resources/js/Pages/Auth/ConfirmPassword.jsx": [],
+  "resources/js/Pages/Auth/ForgotPassword.jsx": [],
+  "resources/js/Pages/Auth/Login.jsx": [],
+  "resources/js/Pages/Auth/OtpLogin.jsx": [],
+  "resources/js/Pages/Auth/Register.jsx": [],
+  "resources/js/Pages/Auth/ResetPassword.jsx": [],
+  "resources/js/Pages/Auth/VerifyEmail.jsx": [],
+  "resources/js/Pages/Campaigns/Index.jsx": [],
+  "resources/js/Pages/Campaigns/Show.jsx": [],
+  "resources/js/Pages/Coupons/Index.jsx": [],
+  "resources/js/Pages/Dashboard.jsx": [],
+  "resources/js/Pages/Executive/LinkQr.jsx": [],
+  "resources/js/Pages/Profile/Edit.jsx": [],
+  "resources/js/Pages/Profile/Partials/DeleteUserForm.jsx": [],
+  "resources/js/Pages/Profile/Partials/UpdatePasswordForm.jsx": [],
+  "resources/js/Pages/Profile/Partials/UpdateProfileInformationForm.jsx": [],
+  "resources/js/Pages/Subscriptions/Index.jsx": [],
+  "resources/js/Pages/Transactions/Index.jsx": [],
+  "resources/js/Pages/Welcome.jsx": [],
+  "resources/js/ssr.jsx": [],
+  "vendor/tightenco/ziggy/dist/index.js": []
 }

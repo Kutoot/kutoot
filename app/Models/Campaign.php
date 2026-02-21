@@ -19,6 +19,7 @@ class Campaign extends Model
     use HasFactory, LogsActivity;
 
     protected $fillable = [
+        'code',
         'category_id',
         'creator_id',
         'creator_type',
@@ -28,6 +29,11 @@ class Campaign extends Model
         'start_date',
         'reward_cost_target',
         'stamp_target',
+        'stamp_slots',
+        'stamp_slot_min',
+        'stamp_slot_max',
+        'stamp_editable_on_plan_purchase',
+        'stamp_editable_on_coupon_redemption',
         'collected_commission_cache',
         'issued_stamps_cache',
         'marketing_bounty_percentage',
@@ -57,6 +63,11 @@ class Campaign extends Model
             'collected_commission_cache' => 'decimal:2',
             'marketing_bounty_percentage' => 'integer',
             'winner_announcement_date' => 'datetime',
+            'stamp_slots' => 'integer',
+            'stamp_slot_min' => 'integer',
+            'stamp_slot_max' => 'integer',
+            'stamp_editable_on_plan_purchase' => 'boolean',
+            'stamp_editable_on_coupon_redemption' => 'boolean',
         ];
     }
 
@@ -100,5 +111,100 @@ class Campaign extends Model
     public function scopeForPlan(Builder $query, int $planId): Builder
     {
         return $query->whereHas('plans', fn (Builder $q) => $q->where('plan_id', $planId));
+    }
+
+    /**
+     * Whether this campaign has a configured stamp code format.
+     */
+    public function hasStampConfig(): bool
+    {
+        return $this->code !== null
+            && $this->stamp_slots !== null
+            && $this->stamp_slot_min !== null
+            && $this->stamp_slot_max !== null;
+    }
+
+    /**
+     * Number of digits needed to represent the max slot value (for zero-padding).
+     */
+    public function getSlotDigitCount(): int
+    {
+        return strlen((string) $this->stamp_slot_max);
+    }
+
+    /**
+     * Calculate total possible stamp combinations: C(range, slots).
+     */
+    public function getPossibleCombinations(): int
+    {
+        if (! $this->hasStampConfig()) {
+            return 0;
+        }
+
+        $range = $this->stamp_slot_max - $this->stamp_slot_min + 1;
+        $slots = $this->stamp_slots;
+
+        if ($slots > $range) {
+            return 0;
+        }
+
+        return $this->binomialCoefficient($range, $slots);
+    }
+
+    /**
+     * Format slot values into a full stamp code string.
+     *
+     * @param  array<int>  $slotValues
+     */
+    public function formatStampCode(array $slotValues): string
+    {
+        $digits = $this->getSlotDigitCount();
+        $paddedSlots = array_map(
+            fn (int $value): string => str_pad((string) $value, $digits, '0', STR_PAD_LEFT),
+            $slotValues,
+        );
+
+        return strtoupper($this->code).'-'.implode('-', $paddedSlots);
+    }
+
+    /**
+     * Generate a sample stamp code for preview purposes.
+     */
+    public function generateSampleStampCode(): string
+    {
+        if (! $this->hasStampConfig()) {
+            return 'STP-XXXXXXXX';
+        }
+
+        $range = range($this->stamp_slot_min, $this->stamp_slot_max);
+        $selected = collect($range)->random($this->stamp_slots)->sort()->values()->all();
+
+        return $this->formatStampCode($selected);
+    }
+
+    /**
+     * Calculate the binomial coefficient C(n, k).
+     */
+    protected function binomialCoefficient(int $n, int $k): int
+    {
+        if ($k > $n) {
+            return 0;
+        }
+
+        if ($k === 0 || $k === $n) {
+            return 1;
+        }
+
+        // Optimize by using smaller k
+        if ($k > $n - $k) {
+            $k = $n - $k;
+        }
+
+        $result = 1;
+        for ($i = 0; $i < $k; $i++) {
+            $result = intdiv($result * ($n - $i), $i + 1);
+        }
+
+        return $result;
     }
 }

@@ -21,6 +21,11 @@ return new class extends Migration
             $table->decimal('total_amount', 15, 2)->default(0)->comment('Final amount user paid (amount + platform_fee + gst_amount)');
             $table->string('payment_gateway')->nullable();
             $table->string('payment_id')->nullable();
+            $table->string('razorpay_order_id')->nullable();
+            $table->string('transfer_id')->nullable();
+            $table->string('refund_id')->nullable();
+            $table->string('idempotency_key')->nullable()->unique();
+            $table->string('type')->default('coupon_redemption');
             $table->string('payment_status')->default('pending');
             $table->decimal('commission_amount', 15, 2)->default(0);
             $table->timestamps();
