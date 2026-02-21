@@ -16,7 +16,9 @@ class OtpService
 
     public function generateOtp(User $user): string
     {
-        $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $length = (int) config('auth.otp_length', 6);
+        $max = (int) str_repeat('9', $length);
+        $otp = str_pad((string) random_int(0, $max), $length, '0', STR_PAD_LEFT);
 
         $user->update([
             'otp_code' => $otp,
@@ -31,7 +33,9 @@ class OtpService
      */
     public function generateOtpForSession(string $identifier): string
     {
-        $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $length = (int) config('auth.otp_length', 6);
+        $max = (int) str_repeat('9', $length);
+        $otp = str_pad((string) random_int(0, $max), $length, '0', STR_PAD_LEFT);
 
         Session::put("otp.{$identifier}", [
             'code' => $otp,
