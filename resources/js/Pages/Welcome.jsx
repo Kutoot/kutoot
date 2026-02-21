@@ -29,13 +29,7 @@ export default function Welcome({ auth }) {
                                     href={route('login')}
                                     className="rounded-full px-5 py-2.5 font-bold text-sm text-lucky-700 border-2 border-lucky-300 hover:bg-lucky-50 transition-colors"
                                 >
-                                    Log in
-                                </Link>
-                                <Link
-                                    href={route('register')}
-                                    className="rounded-full px-5 py-2.5 font-bold text-sm text-white lucky-gradient shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all"
-                                >
-                                    Sign Up Free
+                                    Log in / Sign up
                                 </Link>
                             </>
                         )}
@@ -65,7 +59,7 @@ export default function Welcome({ auth }) {
                     <div className="flex flex-wrap justify-center gap-4 mb-16">
                         {!auth.user && (
                             <Link
-                                href={route('register')}
+                                href={route('login')}
                                 className="group relative inline-flex items-center gap-2 rounded-full px-8 py-4 font-bold text-lg text-white lucky-gradient shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all"
                             >
                                 <span className="text-2xl group-hover:animate-bounce">🎰</span>

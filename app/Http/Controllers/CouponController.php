@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PaymentStatus;
+use App\Enums\TransactionType;
 use App\Events\CommissionEarned;
 use App\Models\DiscountCoupon;
 use App\Models\MerchantLocation;
@@ -11,6 +13,7 @@ use App\Services\Payments\PaymentManager;
 use App\Services\StampService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class CouponController extends Controller
@@ -112,8 +115,17 @@ class CouponController extends Controller
                 $finalBillAfterDiscount = max(0, $amount - $discountAmount);
                 $grandTotal = $finalBillAfterDiscount + $platformFee + $gstAmount;
 
+                // Edge case: discount must not reduce bill below platform fee + GST
+                if ($finalBillAfterDiscount > 0 && $finalBillAfterDiscount < ($platformFee + $gstAmount)) {
+                    throw new \InvalidArgumentException(
+                        'Discount reduces the bill below the minimum required for platform fee and GST.'
+                    );
+                }
+
                 // 3. Calculate commission for the merchant location
                 $commissionAmount = ($finalBillAfterDiscount * $merchantLocation->commission_percentage) / 100;
+
+                $idempotencyKey = 'coupon_'.$user->id.'_'.$coupon->id.'_'.Str::uuid();
 
                 // 4. Create Transaction
                 $transaction = Transaction::create([
@@ -127,7 +139,9 @@ class CouponController extends Controller
                     'gst_amount' => $gstAmount,
                     'total_amount' => $grandTotal,
                     'payment_gateway' => $this->paymentManager->getDefaultDriver(),
-                    'payment_status' => 'pending',
+                    'payment_status' => PaymentStatus::Pending,
+                    'type' => TransactionType::CouponRedemption,
+                    'idempotency_key' => $idempotencyKey,
                     'commission_amount' => $commissionAmount,
                 ]);
 
@@ -141,7 +155,10 @@ class CouponController extends Controller
 
                 // 5. Debug mode: skip payment gateway and auto-complete
                 if (config('app.debug')) {
-                    $transaction->update(['payment_status' => 'paid', 'payment_id' => 'debug_'.uniqid()]);
+                    $transaction->update([
+                        'payment_status' => PaymentStatus::Paid,
+                        'payment_id' => 'debug_'.uniqid(),
+                    ]);
 
                     // Complete coupon redemption
                     if ($transaction->coupon_id) {
@@ -167,7 +184,12 @@ class CouponController extends Controller
 
                 // 6. Initiate payment order
                 $order = $this->paymentManager->driver()->createOrder($transaction);
-                $transaction->update(['payment_id' => $order['id']]);
+                $transaction->update(['razorpay_order_id' => $order['id']]);
+
+                // Store transfer ID if present
+                if (! empty($order['transfers'][0]['id'])) {
+                    $transaction->update(['transfer_id' => $order['transfers'][0]['id']]);
+                }
 
                 return response()->json([
                     'order' => $order,
@@ -184,8 +206,11 @@ class CouponController extends Controller
         $gateway = $this->paymentManager->driver($transaction->payment_gateway);
 
         if ($gateway->verifyPayment($request->all())) {
-            DB::transaction(function () use ($transaction) {
-                $transaction->update(['payment_status' => 'paid']);
+            DB::transaction(function () use ($transaction, $request) {
+                $transaction->update([
+                    'payment_status' => PaymentStatus::Paid,
+                    'payment_id' => $request->input('razorpay_payment_id'),
+                ]);
 
                 $user = $transaction->user;
 

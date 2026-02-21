@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\PaymentStatus;
+use App\Enums\TransactionType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,6 +29,11 @@ class Transaction extends Model
         'total_amount',
         'payment_gateway',
         'payment_id',
+        'razorpay_order_id',
+        'transfer_id',
+        'refund_id',
+        'idempotency_key',
+        'type',
         'payment_status',
         'commission_amount',
     ];
@@ -52,6 +59,8 @@ class Transaction extends Model
             'gst_amount' => 'decimal:2',
             'total_amount' => 'decimal:2',
             'commission_amount' => 'decimal:2',
+            'payment_status' => PaymentStatus::class,
+            'type' => TransactionType::class,
         ];
     }
 

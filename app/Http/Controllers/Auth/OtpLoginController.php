@@ -7,6 +7,7 @@ use App\Http\Requests\Auth\OtpSendRequest;
 use App\Http\Requests\Auth\OtpVerifyRequest;
 use App\Models\User;
 use App\Services\OtpService;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -36,11 +37,13 @@ class OtpLoginController extends Controller
             ->first();
 
         if (! $user) {
-            throw ValidationException::withMessages([
-                'identifier' => __('No account found with this :type.', [
-                    'type' => $isEmail ? 'email' : 'mobile number',
-                ]),
+            $user = User::create([
+                'name' => $isEmail ? strstr($identifier, '@', true) : 'User ' . $identifier,
+                'email' => $isEmail ? $identifier : null,
+                'mobile' => $isEmail ? null : $identifier,
             ]);
+
+            event(new Registered($user));
         }
 
         $otp = $this->otpService->generateOtp($user);
@@ -67,11 +70,14 @@ class OtpLoginController extends Controller
             ->first();
 
         if (! $user) {
-            throw ValidationException::withMessages([
-                'identifier' => __('No account found with this :type.', [
-                    'type' => $isEmail ? 'email' : 'mobile number',
-                ]),
+            // Fallback user creation if something went wrong between send/verify
+            $user = User::create([
+                'name' => $isEmail ? strstr($identifier, '@', true) : 'User ' . $identifier,
+                'email' => $isEmail ? $identifier : null,
+                'mobile' => $isEmail ? null : $identifier,
             ]);
+
+            event(new Registered($user));
         }
 
         if (! $this->otpService->verifyOtp($user, $otp)) {
