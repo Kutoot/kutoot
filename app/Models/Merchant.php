@@ -7,17 +7,20 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Image\Enums\Fit;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class Merchant extends Model
+class Merchant extends Model implements HasMedia
 {
     /** @use HasFactory<\Database\Factories\MerchantFactory> */
-    use HasFactory, LogsActivity;
+    use HasFactory, InteractsWithMedia, LogsActivity;
 
     protected $fillable = [
         'name',
         'razorpay_account_id',
         'slug',
-        'logo',
         'is_active',
     ];
 
@@ -46,5 +49,33 @@ class Merchant extends Model
     public function locations(): HasMany
     {
         return $this->hasMany(MerchantLocation::class);
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('logo')
+            ->singleFile()
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml']);
+
+        $this->addMediaCollection('media')
+            ->acceptsMimeTypes([
+                'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+                'video/mp4', 'video/webm', 'video/quicktime',
+            ]);
+    }
+
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->addMediaConversion('thumb')
+            ->fit(Fit::Contain, 300, 300)
+            ->format('webp')
+            ->quality(80)
+            ->nonQueued();
+
+        $this->addMediaConversion('preview')
+            ->fit(Fit::Contain, 800, 600)
+            ->format('webp')
+            ->quality(85)
+            ->withResponsiveImages();
     }
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { router } from '@inertiajs/react';
+import axios from 'axios';
 
 /**
  * Reusable hook for Razorpay payment integration.
@@ -133,34 +134,16 @@ export default function useRazorpay({
 
         // Fetch order via JSON, then open Razorpay popup
         try {
-            const response = await fetch(orderRoute, {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-                body: JSON.stringify(orderData),
+            const { data: result } = await axios.post(orderRoute, orderData, {
+                headers: { 'Accept': 'application/json' },
             });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                const errMsg = result.error || 'Something went wrong';
-                setError(errMsg);
-                setIsLoading(false);
-                setPaymentStatus('failed');
-                onError?.(errMsg);
-                return;
-            }
 
             setIsLoading(false);
             openCheckout(result.order, verifyRoute, extraVerifyData, description);
         } catch (err) {
-            setIsLoading(false);
-            const errMsg = 'Payment initiation failed. Please try again.';
+            const errMsg = err.response?.data?.error || 'Payment initiation failed. Please try again.';
             setError(errMsg);
+            setIsLoading(false);
             setPaymentStatus('failed');
             onError?.(errMsg);
         }

@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm, router, usePage } from '@inertiajs/react';
+import axios from 'axios';
 import { useState } from 'react';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -61,22 +62,13 @@ export default function Index({ auth, coupons, locations, planName, stampsPerHun
 
         // Fetch order via JSON, then open Razorpay popup
         try {
-            const response = await fetch(route('coupons.redeem', couponId), {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-                body: JSON.stringify(formData),
+            const { data: result } = await axios.post(route('coupons.redeem', couponId), formData, {
+                headers: { 'Accept': 'application/json' },
             });
 
-            const result = await response.json();
-
-            if (response.ok) {
-                closeModal();
-                const { order, transaction_id } = result;
+            closeModal();
+            const { order, transaction_id } = result;
+            {
                 const options = {
                     key: order.key,
                     amount: order.amount,
@@ -109,13 +101,11 @@ export default function Index({ auth, coupons, locations, planName, stampsPerHun
                 const rzp = new window.Razorpay(options);
                 rzp.on('payment.failed', () => setIsProcessing(false));
                 rzp.open();
-            } else {
-                alert(result.error || 'Something went wrong');
-                setIsProcessing(false);
             }
         } catch (error) {
+            const errMsg = error.response?.data?.error || 'Payment initiation failed. Please try again.';
             console.error('Payment initiation failed', error);
-            alert('Payment initiation failed. Please try again.');
+            alert(errMsg);
             setIsProcessing(false);
         }
     };

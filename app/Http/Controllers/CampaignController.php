@@ -29,7 +29,7 @@ class CampaignController extends Controller
             $data['creator'] = array_merge($campaign->creator?->toArray() ?? [], [
                 'merchant' => $merchant ? [
                     'name' => $merchant->name,
-                    'logo' => $merchant->logo,
+                    'logo' => $merchant->getFirstMediaUrl('logo', 'thumb'),
                 ] : null,
             ]);
             $data['bounty_percentage'] = $this->bountyService->effectiveBountyPercentage($campaign);
@@ -67,7 +67,7 @@ class CampaignController extends Controller
                 'creator' => array_merge($campaign->creator?->toArray() ?? [], [
                     'merchant' => $merchant ? [
                         'name' => $merchant->name,
-                        'logo' => $merchant->logo,
+                        'logo' => $merchant->getFirstMediaUrl('logo', 'thumb'),
                     ] : null,
                 ]),
                 'stamp_config' => $campaign->hasStampConfig() ? [

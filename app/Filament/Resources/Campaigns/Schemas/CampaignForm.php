@@ -9,6 +9,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -72,6 +73,24 @@ class CampaignForm
                     ->helperText('Select which subscription plans can access this campaign.')
                     ->bulkToggleable()
                     ->columns(2),
+
+                Section::make('Media')
+                    ->description('Upload images and videos for this campaign.')
+                    ->collapsible()
+                    ->components([
+                        SpatieMediaLibraryFileUpload::make('media')
+                            ->collection('media')
+                            ->multiple()
+                            ->reorderable()
+                            ->acceptedFileTypes([
+                                'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+                                'video/mp4', 'video/webm', 'video/quicktime',
+                            ])
+                            ->maxSize(102400)
+                            ->conversion('thumb')
+                            ->responsiveImages()
+                            ->customHeaders(['CacheControl' => 'max-age=86400']),
+                    ]),
 
                 Section::make('Stamp Code Configuration')
                     ->description('Configure the lottery-style stamp code format for this campaign.')

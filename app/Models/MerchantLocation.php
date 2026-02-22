@@ -8,11 +8,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Image\Enums\Fit;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class MerchantLocation extends Model
+class MerchantLocation extends Model implements HasMedia
 {
     /** @use HasFactory<\Database\Factories\MerchantLocationFactory> */
-    use HasFactory, LogsActivity;
+    use HasFactory, InteractsWithMedia, LogsActivity;
 
     protected $fillable = [
         'merchant_id',
@@ -68,5 +72,29 @@ class MerchantLocation extends Model
     public function coupons(): HasMany
     {
         return $this->hasMany(DiscountCoupon::class);
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('media')
+            ->acceptsMimeTypes([
+                'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+                'video/mp4', 'video/webm', 'video/quicktime',
+            ]);
+    }
+
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->addMediaConversion('thumb')
+            ->fit(Fit::Contain, 300, 300)
+            ->format('webp')
+            ->quality(80)
+            ->nonQueued();
+
+        $this->addMediaConversion('preview')
+            ->fit(Fit::Contain, 800, 600)
+            ->format('webp')
+            ->quality(85)
+            ->withResponsiveImages();
     }
 }

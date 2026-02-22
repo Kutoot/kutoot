@@ -1,5 +1,6 @@
 ﻿import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router, usePage } from '@inertiajs/react';
+import axios from 'axios';
 import CurrencySymbol from '@/Components/CurrencySymbol';
 import ConfirmationModal from '@/Components/ConfirmationModal';
 import { useState, useEffect } from 'react';
@@ -43,24 +44,9 @@ export default function Index({ auth, plans, currentSubscription, primaryCampaig
         // Paid plan: fetch order and open Razorpay popup
         setUpgradingPlanId(plan.id);
         try {
-            const response = await fetch(route('subscriptions.upgrade'), {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-                body: JSON.stringify({ plan_id: plan.id }),
+            const { data: result } = await axios.post(route('subscriptions.upgrade'), { plan_id: plan.id }, {
+                headers: { 'Accept': 'application/json' },
             });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                alert(result.error || 'Something went wrong');
-                setUpgradingPlanId(null);
-                return;
-            }
 
             const { order, transaction_id, plan_id } = result;
 
@@ -95,8 +81,9 @@ export default function Index({ auth, plans, currentSubscription, primaryCampaig
             rzp.on('payment.failed', () => setUpgradingPlanId(null));
             rzp.open();
         } catch (error) {
+            const errMsg = error.response?.data?.error || 'Payment initiation failed. Please try again.';
             console.error('Payment initiation failed', error);
-            alert('Payment initiation failed. Please try again.');
+            alert(errMsg);
             setUpgradingPlanId(null);
         }
     };

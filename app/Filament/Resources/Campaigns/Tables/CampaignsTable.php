@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Campaigns\Tables;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -14,6 +15,11 @@ class CampaignsTable
     {
         return $table
             ->columns([
+                SpatieMediaLibraryImageColumn::make('media')
+                    ->collection('media')
+                    ->conversion('thumb')
+                    ->limit(3)
+                    ->circular(),
                 TextColumn::make('category.name')
                     ->searchable(),
                 TextColumn::make('creator_type')
