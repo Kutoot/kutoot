@@ -68,7 +68,7 @@ export default function Dashboard({ auth, user, plan, primaryCampaign, eligibleC
                                         </p>
                                         <div className="grid grid-cols-3 gap-2 sm:gap-3 text-sm">
                                             <PlanMetric value={plan.stamps_on_purchase} label="Bonus Stamps" color="lucky" />
-                                            <PlanMetric value={plan.stamps_per_100} label={<>Per <CurrencySymbol />100</>} color="lucky" />
+                                            <PlanMetric value={plan.stamps_per_denomination} label={<>Per <CurrencySymbol />{plan.stamp_denomination}</>} color="lucky" />
                                             <PlanMetric value={plan.max_discounted_bills} label="Max Bills" color="ticket" />
                                         </div>
                                         <div className="grid grid-cols-2 gap-2 sm:gap-3 text-sm mt-2 sm:mt-3">

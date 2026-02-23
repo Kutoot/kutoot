@@ -13,7 +13,8 @@ class BasePlanSeeder extends Seeder
             ['name' => 'Base Plan'],
             [
                 'stamps_on_purchase' => 0,
-                'stamps_per_100' => 1,
+                'stamp_denomination' => 100,
+                'stamps_per_denomination' => 1,
                 'max_discounted_bills' => 5,
                 'max_redeemable_amount' => 500,
                 'is_default' => true,

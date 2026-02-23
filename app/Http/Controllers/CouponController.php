@@ -77,7 +77,8 @@ class CouponController extends Controller
             'coupons' => $coupons,
             'locations' => $locations,
             'planName' => $plan->name ?? 'Free Tier',
-            'stampsPerHundred' => $plan->stamps_per_100 ?? 0,
+            'stampDenomination' => (float) ($plan->stamp_denomination ?? 100),
+            'stampsPerDenomination' => $plan->stamps_per_denomination ?? 1,
             'primaryCampaign' => $user?->primaryCampaign ? [
                 'id' => $user->primaryCampaign->id,
                 'reward_name' => $user->primaryCampaign->reward_name,

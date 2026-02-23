@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Enums\LoanStatus;
+use App\Enums\TargetType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Image\Enums\Fit;
@@ -23,6 +26,9 @@ class MerchantLocation extends Model implements HasMedia
         'branch_name',
         'commission_percentage',
         'is_active',
+        'monthly_target_type',
+        'monthly_target_value',
+        'deduct_commission_from_target',
     ];
 
     /**
@@ -33,6 +39,9 @@ class MerchantLocation extends Model implements HasMedia
         return [
             'commission_percentage' => 'decimal:2',
             'is_active' => 'boolean',
+            'monthly_target_type' => TargetType::class,
+            'monthly_target_value' => 'decimal:2',
+            'deduct_commission_from_target' => 'boolean',
         ];
     }
 
@@ -72,6 +81,80 @@ class MerchantLocation extends Model implements HasMedia
     public function coupons(): HasMany
     {
         return $this->hasMany(DiscountCoupon::class);
+    }
+
+    /**
+     * @return HasMany<MerchantLocationMonthlySummary, $this>
+     */
+    public function monthlySummaries(): HasMany
+    {
+        return $this->hasMany(MerchantLocationMonthlySummary::class);
+    }
+
+    /**
+     * @return HasMany<MerchantLocationLoan, $this>
+     */
+    public function loans(): HasMany
+    {
+        return $this->hasMany(MerchantLocationLoan::class);
+    }
+
+    /**
+     * @return HasOne<MerchantLocationLoan, $this>
+     */
+    public function activeLoan(): HasOne
+    {
+        return $this->hasOne(MerchantLocationLoan::class)
+            ->where('status', LoanStatus::Active)
+            ->latest('approved_at');
+    }
+
+    /**
+     * Check if this location participates in the streak/loan program.
+     */
+    public function hasMonthlyTarget(): bool
+    {
+        return $this->monthly_target_type !== null && $this->monthly_target_value !== null && (float) $this->monthly_target_value > 0;
+    }
+
+    /**
+     * Calculate the current consecutive streak of months meeting the target.
+     * Counts backward from the previous calendar month.
+     */
+    public function getCurrentStreak(): int
+    {
+        if (! $this->hasMonthlyTarget()) {
+            return 0;
+        }
+
+        $summaries = $this->monthlySummaries()
+            ->orderByDesc('year')
+            ->orderByDesc('month')
+            ->get(['year', 'month', 'target_met']);
+
+        $streak = 0;
+        $expectedYear = (int) now()->format('Y');
+        $expectedMonth = (int) now()->format('m') - 1;
+
+        if ($expectedMonth === 0) {
+            $expectedMonth = 12;
+            $expectedYear--;
+        }
+
+        foreach ($summaries as $summary) {
+            if ((int) $summary->year === $expectedYear && (int) $summary->month === $expectedMonth && $summary->target_met) {
+                $streak++;
+                $expectedMonth--;
+                if ($expectedMonth === 0) {
+                    $expectedMonth = 12;
+                    $expectedYear--;
+                }
+            } else {
+                break;
+            }
+        }
+
+        return $streak;
     }
 
     public function registerMediaCollections(): void

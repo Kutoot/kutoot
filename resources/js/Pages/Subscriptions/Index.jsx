@@ -166,8 +166,8 @@ export default function Index({ auth, plans, currentSubscription, primaryCampaig
                                                 <p className="text-xs text-gray-500 font-medium">🎫 Bonus</p>
                                             </div>
                                             <div className="flex-1 bg-white/80 backdrop-blur-sm rounded-xl p-2.5 sm:p-3 text-center border border-dashed border-lucky-200">
-                                                <p className={`text-xl sm:text-2xl font-bold ${tier.accent}`}>{plan.stamps_per_100}</p>
-                                                <p className="text-xs text-gray-500 font-medium">Per <CurrencySymbol />100</p>
+                                                <p className={`text-xl sm:text-2xl font-bold ${tier.accent}`}>{plan.stamps_per_denomination}</p>
+                                                <p className="text-xs text-gray-500 font-medium">Per <CurrencySymbol />{plan.stamp_denomination}</p>
                                             </div>
                                         </div>
                                     </div>

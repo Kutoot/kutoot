@@ -16,3 +16,6 @@ Schedule::command('activitylog:clean --days=90')->weekly();
 
 // Prune old personal access tokens
 Schedule::command('sanctum:prune-expired --hours=24')->daily();
+
+// Recalculate monthly targets on the 1st of each month at 1:00 AM
+Schedule::command('app:recalculate-monthly-targets')->monthlyOn(1, '01:00');

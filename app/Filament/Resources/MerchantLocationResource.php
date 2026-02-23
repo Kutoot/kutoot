@@ -5,6 +5,8 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\MerchantLocations\Pages\CreateMerchantLocation;
 use App\Filament\Resources\MerchantLocations\Pages\EditMerchantLocation;
 use App\Filament\Resources\MerchantLocations\Pages\ListMerchantLocations;
+use App\Filament\Resources\MerchantLocations\RelationManagers\LoansRelationManager;
+use App\Filament\Resources\MerchantLocations\RelationManagers\MonthlySummariesRelationManager;
 use App\Filament\Resources\MerchantLocations\RelationManagers\QrCodesRelationManager;
 use App\Filament\Resources\MerchantLocations\Schemas\MerchantLocationForm;
 use App\Filament\Resources\MerchantLocations\Tables\MerchantLocationsTable;
@@ -41,6 +43,8 @@ class MerchantLocationResource extends Resource
     {
         return [
             QrCodesRelationManager::class,
+            MonthlySummariesRelationManager::class,
+            LoansRelationManager::class,
         ];
     }
 

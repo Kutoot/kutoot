@@ -19,7 +19,8 @@ class SubscriptionPlan extends Model
         'price',
         'is_default',
         'stamps_on_purchase',
-        'stamps_per_100',
+        'stamp_denomination',
+        'stamps_per_denomination',
         'max_discounted_bills',
         'max_redeemable_amount',
         'duration_days',
@@ -41,9 +42,26 @@ class SubscriptionPlan extends Model
     {
         return [
             'price' => 'decimal:2',
+            'stamp_denomination' => 'decimal:2',
             'max_redeemable_amount' => 'decimal:2',
             'is_default' => 'boolean',
         ];
+    }
+
+    /**
+     * Calculate stamps earned for a given bill amount.
+     *
+     * Formula: floor(amount / denomination) * stamps_per_denomination
+     */
+    public function calculateStampsForAmount(float $amount): int
+    {
+        $denomination = (float) $this->stamp_denomination;
+
+        if ($denomination <= 0) {
+            return 0;
+        }
+
+        return (int) floor($amount / $denomination) * $this->stamps_per_denomination;
     }
 
     /**

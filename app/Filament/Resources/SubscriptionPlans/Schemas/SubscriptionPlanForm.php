@@ -41,12 +41,21 @@ class SubscriptionPlanForm
                             ->required()
                             ->numeric()
                             ->default(0),
-                        TextInput::make('stamps_per_100')
-                            ->label('Stamps per ₹100 Bill')
-                            ->helperText('Number of stamps awarded for every ₹100 spent on a bill.')
+                        TextInput::make('stamp_denomination')
+                            ->label('Stamp Denomination (₹)')
+                            ->helperText('Bill amount required to earn stamps. E.g. ₹10 means stamps are calculated per ₹10 of the bill.')
                             ->required()
                             ->numeric()
-                            ->default(1),
+                            ->default(100)
+                            ->minValue(0.01)
+                            ->prefix('₹'),
+                        TextInput::make('stamps_per_denomination')
+                            ->label('Stamps per Denomination')
+                            ->helperText('Number of stamps awarded for each denomination unit spent on a bill.')
+                            ->required()
+                            ->numeric()
+                            ->default(1)
+                            ->minValue(0),
                     ]),
 
                 Section::make('Billing Limits')

@@ -13,7 +13,7 @@ import EmptyState from '@/Components/EmptyState';
 import PaymentBreakdown from '@/Components/PaymentBreakdown';
 import ConfirmationModal from '@/Components/ConfirmationModal';
 
-export default function Index({ auth, coupons, locations, planName, stampsPerHundred, primaryCampaign, availableCampaigns, remainingRedeemAmount, maxRedeemableAmount }) {
+export default function Index({ auth, coupons, locations, planName, stampDenomination, stampsPerDenomination, primaryCampaign, availableCampaigns, remainingRedeemAmount, maxRedeemableAmount }) {
     const { platform_fee, gst_rate, platform_fee_type, flash } = usePage().props;
 
     const [confirmingRedemption, setConfirmingRedemption] = useState(false);
@@ -129,7 +129,7 @@ export default function Index({ auth, coupons, locations, planName, stampsPerHun
         const feeAmount = platform_fee_type === 'percentage' ? (billAmount * fee / 100) : fee;
         const gst = (feeAmount * gst_rate) / 100;
         const total = finalBill + feeAmount + gst;
-        const estimatedStamps = Math.floor(billAmount / 100) * stampsPerHundred;
+        const estimatedStamps = stampDenomination > 0 ? Math.floor(billAmount / stampDenomination) * stampsPerDenomination : 0;
 
         return { billAmount, discount, finalBill, feeAmount, gst, total, estimatedStamps };
     };
@@ -404,7 +404,7 @@ export default function Index({ auth, coupons, locations, planName, stampsPerHun
                                             You'll earn {breakdown.estimatedStamps} stamp{breakdown.estimatedStamps !== 1 ? 's' : ''}
                                         </p>
                                         <p className="text-xs text-green-600">
-                                            {stampsPerHundred} stamp{stampsPerHundred !== 1 ? 's' : ''} per <CurrencySymbol />100
+                                            {stampsPerDenomination} stamp{stampsPerDenomination !== 1 ? 's' : ''} per <CurrencySymbol />{stampDenomination}
                                         </p>
                                     </div>
                                 </div>

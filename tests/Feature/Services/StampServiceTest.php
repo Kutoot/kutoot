@@ -213,7 +213,8 @@ test('bill payment stamps are never editable', function () {
     $user->update(['primary_campaign_id' => $campaign->id]);
 
     $plan = SubscriptionPlan::factory()->create([
-        'stamps_per_100' => 1,
+        'stamp_denomination' => 100,
+        'stamps_per_denomination' => 1,
     ]);
     UserSubscription::factory()->create([
         'user_id' => $user->id,
@@ -383,7 +384,8 @@ test('coupon redemption stamps use CouponRedemption source', function () {
     $user->update(['primary_campaign_id' => $campaign->id]);
 
     $plan = SubscriptionPlan::factory()->create([
-        'stamps_per_100' => 1,
+        'stamp_denomination' => 100,
+        'stamps_per_denomination' => 1,
     ]);
     UserSubscription::factory()->create([
         'user_id' => $user->id,
@@ -407,4 +409,154 @@ test('coupon redemption stamps use CouponRedemption source', function () {
         expect($stamp->editable_until)->not->toBeNull();
         expect($stamp->code)->toStartWith('COUPON-');
     }
+});
+
+// ---- Dynamic Denomination Tests ----
+
+test('dynamic denomination awards correct stamps for custom denomination', function () {
+    $user = User::factory()->create();
+    $campaign = Campaign::factory()->create([
+        'code' => 'DENOM',
+        'stamp_slots' => 3,
+        'stamp_slot_min' => 1,
+        'stamp_slot_max' => 20,
+    ]);
+    $user->update(['primary_campaign_id' => $campaign->id]);
+
+    $plan = SubscriptionPlan::factory()->create([
+        'stamp_denomination' => 15,
+        'stamps_per_denomination' => 1,
+    ]);
+    UserSubscription::factory()->create([
+        'user_id' => $user->id,
+        'plan_id' => $plan->id,
+    ]);
+
+    $transaction = Transaction::factory()->create([
+        'user_id' => $user->id,
+        'original_bill_amount' => 40,
+        'amount' => 40,
+    ]);
+
+    $count = $this->service->awardStampsForBill($transaction);
+    // floor(40 / 15) * 1 = 2
+    expect($count)->toBe(2);
+});
+
+test('dynamic denomination with multiplier awards correct stamps', function () {
+    $user = User::factory()->create();
+    $campaign = Campaign::factory()->create([
+        'code' => 'MULTI',
+        'stamp_slots' => 3,
+        'stamp_slot_min' => 1,
+        'stamp_slot_max' => 20,
+    ]);
+    $user->update(['primary_campaign_id' => $campaign->id]);
+
+    $plan = SubscriptionPlan::factory()->create([
+        'stamp_denomination' => 10,
+        'stamps_per_denomination' => 3,
+    ]);
+    UserSubscription::factory()->create([
+        'user_id' => $user->id,
+        'plan_id' => $plan->id,
+    ]);
+
+    $transaction = Transaction::factory()->create([
+        'user_id' => $user->id,
+        'original_bill_amount' => 55,
+        'amount' => 55,
+    ]);
+
+    $count = $this->service->awardStampsForBill($transaction);
+    // floor(55 / 10) * 3 = 5 * 3 = 15
+    expect($count)->toBe(15);
+});
+
+test('denomination larger than bill amount awards zero stamps', function () {
+    $user = User::factory()->create();
+    $campaign = Campaign::factory()->create([
+        'code' => 'BIG',
+        'stamp_slots' => 3,
+        'stamp_slot_min' => 1,
+        'stamp_slot_max' => 20,
+    ]);
+    $user->update(['primary_campaign_id' => $campaign->id]);
+
+    $plan = SubscriptionPlan::factory()->create([
+        'stamp_denomination' => 500,
+        'stamps_per_denomination' => 1,
+    ]);
+    UserSubscription::factory()->create([
+        'user_id' => $user->id,
+        'plan_id' => $plan->id,
+    ]);
+
+    $transaction = Transaction::factory()->create([
+        'user_id' => $user->id,
+        'original_bill_amount' => 200,
+        'amount' => 200,
+    ]);
+
+    $count = $this->service->awardStampsForBill($transaction);
+    expect($count)->toBe(0);
+});
+
+test('zero denomination returns zero stamps', function () {
+    $plan = SubscriptionPlan::factory()->create([
+        'stamp_denomination' => 0,
+        'stamps_per_denomination' => 5,
+    ]);
+
+    expect($plan->calculateStampsForAmount(500))->toBe(0);
+});
+
+test('fractional denomination calculates correctly', function () {
+    $plan = SubscriptionPlan::factory()->create([
+        'stamp_denomination' => 7.50,
+        'stamps_per_denomination' => 2,
+    ]);
+
+    // floor(100 / 7.50) = floor(13.33) = 13, 13 * 2 = 26
+    expect($plan->calculateStampsForAmount(100))->toBe(26);
+});
+
+test('calculateStampsForAmount with zero bill returns zero', function () {
+    $plan = SubscriptionPlan::factory()->create([
+        'stamp_denomination' => 10,
+        'stamps_per_denomination' => 1,
+    ]);
+
+    expect($plan->calculateStampsForAmount(0))->toBe(0);
+});
+
+test('coupon redemption uses dynamic denomination', function () {
+    $user = User::factory()->create();
+    $campaign = Campaign::factory()->create([
+        'code' => 'COUPONDENOM',
+        'stamp_slots' => 3,
+        'stamp_slot_min' => 1,
+        'stamp_slot_max' => 20,
+        'stamp_editable_on_coupon_redemption' => true,
+    ]);
+    $user->update(['primary_campaign_id' => $campaign->id]);
+
+    $plan = SubscriptionPlan::factory()->create([
+        'stamp_denomination' => 25,
+        'stamps_per_denomination' => 2,
+    ]);
+    UserSubscription::factory()->create([
+        'user_id' => $user->id,
+        'plan_id' => $plan->id,
+    ]);
+
+    $transaction = Transaction::factory()->create([
+        'user_id' => $user->id,
+        'original_bill_amount' => 80,
+        'amount' => 80,
+    ]);
+
+    $count = $this->service->awardStampsForCouponRedemption($transaction);
+    // floor(80 / 25) * 2 = 3 * 2 = 6
+    expect($count)->toBe(6);
 });

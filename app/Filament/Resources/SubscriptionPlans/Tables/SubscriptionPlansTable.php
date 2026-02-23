@@ -27,8 +27,13 @@ class SubscriptionPlansTable
                     ->label('Stamps on Buy')
                     ->numeric()
                     ->sortable(),
-                TextColumn::make('stamps_per_100')
-                    ->label('Stamps/₹100')
+                TextColumn::make('stamp_denomination')
+                    ->label('Denomination')
+                    ->prefix('₹')
+                    ->numeric()
+                    ->sortable(),
+                TextColumn::make('stamps_per_denomination')
+                    ->label('Stamps/Denom')
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('max_discounted_bills')

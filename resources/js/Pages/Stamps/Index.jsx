@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
-import CurrencySymbol from '@/Components/CurrencySymbol';
+import StampTicket from '@/Components/StampTicket';
 import EmptyState from '@/Components/EmptyState';
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
@@ -152,11 +152,11 @@ export default function StampsIndex({ auth, stamps: initialStamps, stampGroups, 
                             ))
                         )
                     ) : (
-                        <div className="coupon-card p-6">
+                        <div className="coupon-card p-6 border-lucky-300 bg-gradient-to-br from-lucky-50/30 via-white to-lucky-50/30">
                             <EmptyState
-                                icon="🎫"
-                                title="No stamps collected yet"
-                                description="Earn stamps by purchasing a plan or redeeming coupons at partner stores."
+                                icon="🎟️"
+                                title="No lottery tickets yet"
+                                description="Earn tickets by purchasing a plan or redeeming coupons at partner stores."
                                 actionLabel="Browse Coupons"
                                 actionHref={route('coupons.index')}
                             />
@@ -250,88 +250,10 @@ function CampaignStampGroup({ campaignName, stamps, isPrimary, onEdit }) {
                 </h3>
             </div>
 
-            {/* Desktop table */}
-            <div className="hidden md:block overflow-x-auto px-5 sm:px-6 pb-5 sm:pb-6">
-                <table className="min-w-full text-sm">
-                    <thead>
-                        <tr className="border-b-2 border-dashed border-lucky-200 text-left text-lucky-600">
-                            <th className="pb-2 font-bold">Code</th>
-                            <th className="pb-2 font-bold">Source</th>
-                            <th className="pb-2 font-bold text-right">Bill Amount</th>
-                            <th className="pb-2 font-bold text-right">Earned</th>
-                            <th className="pb-2 font-bold text-center">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-dashed divide-lucky-100">
-                        {stamps.map(s => (
-                            <tr key={s.id} className="hover:bg-lucky-50/50 transition-colors">
-                                <td className="py-2.5">
-                                    <span className="font-mono text-xs bg-lucky-100 text-lucky-700 px-2 py-0.5 rounded">{s.code}</span>
-                                </td>
-                                <td className="py-2.5">
-                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                                        s.source === 'Plan Purchase'
-                                            ? 'bg-ticket-100 text-ticket-700'
-                                            : s.source === 'Coupon Redemption'
-                                                ? 'bg-green-100 text-green-700'
-                                                : 'bg-lucky-100 text-lucky-700'
-                                    }`}>
-                                        {s.source === 'Plan Purchase' ? '⭐' : s.source === 'Coupon Redemption' ? '🎟️' : '🧾'} {s.source}
-                                    </span>
-                                </td>
-                                <td className="py-2.5 text-right text-gray-600">
-                                    {s.bill_amount > 0 ? <><CurrencySymbol />{s.bill_amount.toFixed(2)}</> : '—'}
-                                </td>
-                                <td className="py-2.5 text-right text-gray-400 text-xs">{s.created_at}</td>
-                                <td className="py-2.5 text-center">
-                                    {s.is_editable && s.stamp_config && (
-                                        <button
-                                            onClick={() => onEdit(s)}
-                                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-ticket-100 text-ticket-700 hover:bg-ticket-200 transition-colors"
-                                        >
-                                            ✏️ Pick Numbers
-                                        </button>
-                                    )}
-                                    {s.is_editable && s.editable_until && (
-                                        <StampCountdown editableUntil={s.editable_until} />
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-
-            {/* Mobile cards */}
-            <div className="md:hidden space-y-3 px-5 pb-5">
+            {/* Ticket grid — responsive from 1 col to 4 */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 px-5 sm:px-6 pb-5 sm:pb-6">
                 {stamps.map(s => (
-                    <div key={s.id} className="bg-lucky-50/30 rounded-xl p-3 border border-lucky-100">
-                        <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${s.source === 'Plan Purchase' ? 'bg-ticket-100' : s.source === 'Coupon Redemption' ? 'bg-green-100' : 'bg-lucky-100'}`}>
-                                <span className="text-sm">{s.source === 'Plan Purchase' ? '⭐' : s.source === 'Coupon Redemption' ? '🎟️' : '🧾'}</span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex justify-between items-baseline">
-                                    <span className="font-mono text-xs bg-lucky-100 text-lucky-700 px-1.5 py-0.5 rounded">{s.code}</span>
-                                    <span className="text-xs text-gray-400">{s.created_at}</span>
-                                </div>
-                                <p className="text-xs text-gray-500 mt-0.5">
-                                    {s.source} {s.bill_amount > 0 ? <> &middot; <CurrencySymbol />{s.bill_amount.toFixed(2)}</> : ''}
-                                </p>
-                            </div>
-                        </div>
-                        {s.is_editable && s.stamp_config && (
-                            <div className="mt-2 flex items-center justify-between">
-                                <button
-                                    onClick={() => onEdit(s)}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-ticket-100 text-ticket-700 hover:bg-ticket-200 transition-colors"
-                                >
-                                    ✏️ Pick Numbers
-                                </button>
-                                {s.editable_until && <StampCountdown editableUntil={s.editable_until} />}
-                            </div>
-                        )}
-                    </div>
+                    <StampTicket key={s.id} stamp={s} onEdit={onEdit} />
                 ))}
             </div>
         </div>
