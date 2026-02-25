@@ -18,7 +18,7 @@ class CouponCategoryResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'slug' => $this->slug,
+            'slug' => $this->resource->getAttributes()['slug'] ?? null,
             'icon' => $this->icon,
             'is_active' => $this->is_active,
             'coupons_count' => $this->whenCounted('coupons'),

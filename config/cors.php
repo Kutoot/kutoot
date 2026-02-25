@@ -22,6 +22,7 @@ return [
             'http://127.0.0.1:3000',
             'https://admin.kutoot.com',
             'https://kutoot.com',
+            'https://www.kutoot.com',
         ],
 
     'allowed_origins_patterns' => [],
