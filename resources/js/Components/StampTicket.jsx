@@ -55,9 +55,7 @@ export default function StampTicket({ stamp }) {
                 <div className="flex-1 bg-red-600 flex flex-col justify-center px-5">
                     <p className="text-red-200 text-[7px] font-semibold uppercase tracking-widest mb-1">Stamp Code</p>
                     <p className="text-white font-mono text-xs font-bold tracking-wider leading-snug">{stamp.code}</p>
-                    <span className="mt-2 inline-block bg-orange-400 text-red-900 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider rounded-full w-fit">
-                        {src.label}
-                    </span>
+                    <p className="text-orange-300 text-[8px] font-bold uppercase tracking-widest mt-1">{src.label}</p>
                 </div>
             </div>
 
