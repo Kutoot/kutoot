@@ -18,6 +18,8 @@ class StoreSubscriptionPlanRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+            'sort_order' => ['sometimes', 'integer', 'min:0'],
+            'best_value' => ['sometimes', 'boolean'],
             'price' => ['required', 'numeric', 'min:0'],
             'is_default' => ['sometimes', 'boolean'],
             'duration_days' => ['nullable', 'integer', 'min:1'],

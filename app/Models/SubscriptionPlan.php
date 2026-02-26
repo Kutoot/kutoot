@@ -17,6 +17,7 @@ class SubscriptionPlan extends Model
     protected $fillable = [
         'name',
         'sort_order',
+        'best_value',
         'price',
         'is_default',
         'stamps_on_purchase',
@@ -46,6 +47,7 @@ class SubscriptionPlan extends Model
             'stamp_denomination' => 'decimal:2',
             'max_redeemable_amount' => 'decimal:2',
             'is_default' => 'boolean',
+            'best_value' => 'boolean',
         ];
     }
 

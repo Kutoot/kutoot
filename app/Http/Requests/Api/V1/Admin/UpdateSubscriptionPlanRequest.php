@@ -18,6 +18,8 @@ class UpdateSubscriptionPlanRequest extends FormRequest
     {
         return [
             'name' => ['sometimes', 'string', 'max:255'],
+            'sort_order' => ['sometimes', 'integer', 'min:0'],
+            'best_value' => ['sometimes', 'boolean'],
             'price' => ['sometimes', 'numeric', 'min:0'],
             'is_default' => ['sometimes', 'boolean'],
             'duration_days' => ['nullable', 'integer', 'min:1'],
