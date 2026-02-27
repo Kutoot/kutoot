@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             DummyDataSeeder::class,
             CampaignSeeder::class,
             QrCodeSeeder::class,
+            MarketingSeeder::class,
         ]);
     }
 }

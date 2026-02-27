@@ -21,10 +21,14 @@ class RolesAndPermissionsSeeder extends Seeder
             'coupon-category',
             'coupon-redemption',
             'discount-coupon',
+            'featured-banner',
+            'marketing-banner',
             'merchant',
             'merchant-location',
+            'news-article',
             'qr-code',
             'stamp',
+            'store-banner',
             'subscription-plan',
             'transaction',
             'user',
@@ -76,6 +80,6 @@ class RolesAndPermissionsSeeder extends Seeder
         ]);
 
         $userRole = Role::firstOrCreate(['name' => 'User', 'guard_name' => 'web']);
-    // Users typically have limited access via API, but we define the role here.
+        // Users typically have limited access via API, but we define the role here.
     }
 }

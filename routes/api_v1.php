@@ -4,10 +4,14 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CampaignController;
 use App\Http\Controllers\Api\V1\CouponController;
 use App\Http\Controllers\Api\V1\DashboardController;
+use App\Http\Controllers\Api\V1\FeaturedBannerController;
+use App\Http\Controllers\Api\V1\MarketingBannerController;
 use App\Http\Controllers\Api\V1\MerchantLocationController;
+use App\Http\Controllers\Api\V1\NewsArticleController;
 use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\QrScanController;
 use App\Http\Controllers\Api\V1\StampController;
+use App\Http\Controllers\Api\V1\StoreBannerController;
 use App\Http\Controllers\Api\V1\SubscriptionController;
 use App\Http\Controllers\Api\V1\TransactionController;
 use Illuminate\Support\Facades\Route;
@@ -62,6 +66,16 @@ Route::get('/campaigns/{campaign}', [CampaignController::class, 'show'])
 // Subscription plans (public, no auth needed)
 Route::get('/subscriptions/plans', [SubscriptionController::class, 'plans'])
     ->name('api.v1.subscriptions.plans');
+
+// ── Marketing (public, no auth) ─────────────────────────────────────────
+Route::get('/marketing-banners', [MarketingBannerController::class, 'index'])
+    ->name('api.v1.marketing-banners.index');
+Route::get('/store-banners', [StoreBannerController::class, 'index'])
+    ->name('api.v1.store-banners.index');
+Route::get('/featured-banners', [FeaturedBannerController::class, 'index'])
+    ->name('api.v1.featured-banners.index');
+Route::get('/news-articles', [NewsArticleController::class, 'index'])
+    ->name('api.v1.news-articles.index');
 
 // ── Authenticated user endpoints ─────────────────────────────────────────
 Route::middleware('auth:sanctum')->group(function () {
@@ -197,4 +211,20 @@ Route::prefix('admin')->middleware(['auth:sanctum'])->group(function () {
     // Permissions
     Route::apiResource('permissions', \App\Http\Controllers\Api\V1\Admin\PermissionController::class)
         ->names('api.v1.admin.permissions');
+
+    // Marketing Banners
+    Route::apiResource('marketing-banners', \App\Http\Controllers\Api\V1\Admin\MarketingBannerController::class)
+        ->names('api.v1.admin.marketing-banners');
+
+    // Store Banners
+    Route::apiResource('store-banners', \App\Http\Controllers\Api\V1\Admin\StoreBannerController::class)
+        ->names('api.v1.admin.store-banners');
+
+    // Featured Banners
+    Route::apiResource('featured-banners', \App\Http\Controllers\Api\V1\Admin\FeaturedBannerController::class)
+        ->names('api.v1.admin.featured-banners');
+
+    // News Articles
+    Route::apiResource('news-articles', \App\Http\Controllers\Api\V1\Admin\NewsArticleController::class)
+        ->names('api.v1.admin.news-articles');
 });
