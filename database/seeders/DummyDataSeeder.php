@@ -100,23 +100,27 @@ class DummyDataSeeder extends Seeder
         $pizzaHut = Merchant::create([
             'name' => 'Pizza Hut',
             'slug' => 'pizza-hut',
-            'logo' => 'https://placehold.co/400x400/e74c3c/ffffff?text=Pizza+Hut',
             'is_active' => true,
         ]);
+        // seed a logo using media library instead of legacy column
+        $pizzaHut->addMediaFromUrl('https://placehold.co/400x400/e74c3c/ffffff?text=Pizza+Hut')
+            ->toMediaCollection('logo');
 
         $bananaStore = Merchant::create([
             'name' => 'Nano Banana Store',
             'slug' => 'nano-banana-store',
-            'logo' => 'https://placehold.co/400x400/f1c40f/000000?text=Nano+Banana',
             'is_active' => true,
         ]);
+        $bananaStore->addMediaFromUrl('https://placehold.co/400x400/f1c40f/000000?text=Nano+Banana')
+            ->toMediaCollection('logo');
 
         $coffeeBrew = Merchant::create([
             'name' => 'Coffee Brew',
             'slug' => 'coffee-brew',
-            'logo' => 'https://placehold.co/400x400/8B4513/ffffff?text=Coffee+Brew',
             'is_active' => true,
         ]);
+        $coffeeBrew->addMediaFromUrl('https://placehold.co/400x400/8B4513/ffffff?text=Coffee+Brew')
+            ->toMediaCollection('logo');
 
         // 4. Create Locations
         $pizzaDowntown = MerchantLocation::create([
