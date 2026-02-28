@@ -36,6 +36,14 @@ class MerchantLocation extends Model implements HasMedia
         'deduct_commission_from_target',
         'latitude',
         'longitude',
+        'address',
+        'gst_number',
+        'pan_number',
+        'bank_name',
+        'sub_bank_name',
+        'account_number',
+        'ifsc_code',
+        'upi_id',
     ];
 
     /**

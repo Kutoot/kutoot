@@ -12,7 +12,6 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
-use Dotswan\MapPicker\Fields\Map;
 
 class MerchantLocationForm
 {
@@ -62,38 +61,33 @@ class MerchantLocationForm
                 Toggle::make('is_active')
                     ->required(),
 
-                Section::make('Location Mapping')
-                    ->description('Pick the exact location on the map to automatically populate the coordinates.')
+                Section::make('Address & Billing Details')
+                    ->description('Store address, tax identifers, and bank details.')
                     ->collapsible()
+                    ->columns(2)
                     ->components([
-                        Map::make('location')
-                            ->label('Location picker')
+                        TextInput::make('address')
                             ->columnSpanFull()
-                            ->defaultLocation(latitude: 20.5937, longitude: 78.9629)
-                            ->afterStateUpdated(function (Set $set, ?array $state): void {
-                                $set('latitude', $state['lat']);
-                                $set('longitude', $state['lng']);
-                            })
-                            ->afterStateHydrated(function (Set $set, $record): void {
-                                if ($record) {
-                                    $set('location', ['lat' => $record->latitude, 'lng' => $record->longitude]);
-                                }
-                            })
-                            ->extraStyles([
-                                'min-height: 400px',
-                                'border-radius: 10px',
-                            ])
-                            ->liveLocation(true, true, 5000), // update every 5 seconds
-                        
-                        TextInput::make('latitude')
-                            ->label('Latitude')
-                            // ->hidden()
-                            ->readOnly(),
-
-                        TextInput::make('longitude')
-                            ->label('Longitude')
-                            // ->hidden()
-                            ->readOnly(),
+                            ->maxLength(65535),
+                        TextInput::make('gst_number')
+                            ->label('GST Number')
+                            ->maxLength(255),
+                        TextInput::make('pan_number')
+                            ->label('PAN Number')
+                            ->maxLength(255),
+                        TextInput::make('bank_name')
+                            ->maxLength(255),
+                        TextInput::make('sub_bank_name')
+                            ->label('Branch / Sub Bank Name')
+                            ->maxLength(255),
+                        TextInput::make('account_number')
+                            ->maxLength(255),
+                        TextInput::make('ifsc_code')
+                            ->label('IFSC Code')
+                            ->maxLength(255),
+                        TextInput::make('upi_id')
+                            ->label('UPI ID')
+                            ->maxLength(255),
                     ]),
 
                 Section::make('Monthly Target & Loan Eligibility')

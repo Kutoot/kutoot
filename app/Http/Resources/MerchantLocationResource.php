@@ -24,8 +24,6 @@ class MerchantLocationResource extends JsonResource
             'monthly_target_type' => $this->monthly_target_type,
             'monthly_target_value' => $this->monthly_target_value ? (float) $this->monthly_target_value : null,
             'deduct_commission_from_target' => $this->deduct_commission_from_target,
-            'latitude' => $this->latitude,
-            'longitude' => $this->longitude,
             'merchant' => new MerchantResource($this->whenLoaded('merchant')),
             'tags' => TagResource::collection($this->whenLoaded('tags')),
             'state' => $this->whenLoaded('state', fn () => ['id' => $this->state->id, 'name' => $this->state->name]),
