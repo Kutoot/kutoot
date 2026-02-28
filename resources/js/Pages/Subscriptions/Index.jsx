@@ -8,6 +8,7 @@ import useRazorpay from '@/Hooks/useRazorpay';
 
 export default function Index({ auth, plans, currentSubscription, primaryCampaignId, availableCampaigns, isLoggedIn }) {
     const currentPlanIndex = plans.findIndex(p => p.id === currentSubscription?.plan_id);
+    const currentSortOrder = plans.find(p => p.id === currentSubscription?.plan_id)?.sort_order ?? -1;
     const { flash } = usePage().props;
     const [showCampaignModal, setShowCampaignModal] = useState(false);
     const [selectedCampaign, setSelectedCampaign] = useState(null);
@@ -31,6 +32,9 @@ export default function Index({ auth, plans, currentSubscription, primaryCampaig
 
     const handleUpgrade = async (plan) => {
         if (upgradingPlanId) return;
+
+        // prevent upgrading/downgrading based on sort order
+        if ((plan.sort_order ?? 0) <= currentSortOrder) return;
 
         // Free plan: standard Inertia POST (no payment needed)
         if (plan.price <= 0) {
@@ -121,7 +125,8 @@ export default function Index({ auth, plans, currentSubscription, primaryCampaig
                         {plans.map((plan, index) => {
                             const tier = tierConfig[index % tierConfig.length];
                             const isCurrent = currentSubscription?.plan_id === plan.id;
-                            const isUpgradable = isLoggedIn && !isCurrent && !plan.is_default && index > currentPlanIndex;
+                            const isUpgradable = isLoggedIn && !isCurrent && !plan.is_default && (plan.sort_order ?? 0) > currentSortOrder;
+                            const isLowerTier = isLoggedIn && !isCurrent && !plan.is_default && (plan.sort_order ?? 0) <= currentSortOrder;
                             const isUpgrading = upgradingPlanId === plan.id;
 
                             return (
