@@ -32,10 +32,19 @@ class MerchantLocationsTable
                 TextColumn::make('commission_percentage')
                     ->numeric()
                     ->sortable(),
+                TextColumn::make('star_rating')
+                    ->numeric()
+                    ->sortable(),
                 IconColumn::make('is_active')
                     ->boolean(),
                 TextColumn::make('created_at')
                     ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('latitude')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('longitude')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('updated_at')

@@ -9,8 +9,10 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
+use Dotswan\MapPicker\Fields\Map;
 
 class MerchantLocationForm
 {
@@ -51,8 +53,48 @@ class MerchantLocationForm
                 TextInput::make('commission_percentage')
                     ->required()
                     ->numeric(),
+                TextInput::make('star_rating')
+                    ->numeric()
+                    ->minValue(1)
+                    ->maxValue(5)
+                    ->step(0.1)
+                    ->nullable(),
                 Toggle::make('is_active')
                     ->required(),
+
+                Section::make('Location Mapping')
+                    ->description('Pick the exact location on the map to automatically populate the coordinates.')
+                    ->collapsible()
+                    ->components([
+                        Map::make('location')
+                            ->label('Location picker')
+                            ->columnSpanFull()
+                            ->defaultLocation(latitude: 20.5937, longitude: 78.9629)
+                            ->afterStateUpdated(function (Set $set, ?array $state): void {
+                                $set('latitude', $state['lat']);
+                                $set('longitude', $state['lng']);
+                            })
+                            ->afterStateHydrated(function (Set $set, $record): void {
+                                if ($record) {
+                                    $set('location', ['lat' => $record->latitude, 'lng' => $record->longitude]);
+                                }
+                            })
+                            ->extraStyles([
+                                'min-height: 400px',
+                                'border-radius: 10px',
+                            ])
+                            ->liveLocation(true, true, 5000), // update every 5 seconds
+                        
+                        TextInput::make('latitude')
+                            ->label('Latitude')
+                            // ->hidden()
+                            ->readOnly(),
+
+                        TextInput::make('longitude')
+                            ->label('Longitude')
+                            // ->hidden()
+                            ->readOnly(),
+                    ]),
 
                 Section::make('Monthly Target & Loan Eligibility')
                     ->description('Configure monthly targets for streak-based loan eligibility. Leave target type empty to opt out.')

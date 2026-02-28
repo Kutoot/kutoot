@@ -29,10 +29,13 @@ class MerchantLocation extends Model implements HasMedia
         'city_id',
         'branch_name',
         'commission_percentage',
+        'star_rating',
         'is_active',
         'monthly_target_type',
         'monthly_target_value',
         'deduct_commission_from_target',
+        'latitude',
+        'longitude',
     ];
 
     /**
@@ -42,6 +45,7 @@ class MerchantLocation extends Model implements HasMedia
     {
         return [
             'commission_percentage' => 'decimal:2',
+            'star_rating' => 'decimal:1',
             'is_active' => 'boolean',
             'monthly_target_type' => TargetType::class,
             'monthly_target_value' => 'decimal:2',
