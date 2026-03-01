@@ -111,6 +111,7 @@ class ViewMerchantApplication extends ViewRecord
             } else {
                 $merchant = Merchant::create([
                     'name' => $app->store_name,
+                    'slug' => Str::slug($app->store_name) . '-' . Str::random(4),
                     'is_active' => true,
                 ]);
             }

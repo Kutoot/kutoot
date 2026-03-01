@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Image\Enums\Fit;
@@ -32,6 +33,22 @@ class Merchant extends Model implements HasMedia
         return [
             'is_active' => 'boolean',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (Merchant $merchant) {
+            if (empty($merchant->slug)) {
+                $base = Str::slug($merchant->name);
+                $slug = $base;
+                $i = 1;
+                while (static::where('slug', $slug)->exists()) {
+                    $slug = "{$base}-{$i}";
+                    $i++;
+                }
+                $merchant->slug = $slug;
+            }
+        });
     }
 
     public function getActivitylogOptions(): LogOptions
