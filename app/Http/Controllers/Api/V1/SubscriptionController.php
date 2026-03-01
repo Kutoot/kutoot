@@ -264,10 +264,6 @@ class SubscriptionController extends Controller
             ])->values()->toArray(),
         ]);
     }
-            'stamps_awarded' => $stamps->count(),
-            'stamps' => StampResource::collection($stamps),
-        ]);
-    }
 
     /**
      * Set primary campaign
