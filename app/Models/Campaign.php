@@ -239,6 +239,12 @@ class Campaign extends Model implements HasMedia
                 'image/jpeg', 'image/png', 'image/webp', 'image/gif',
                 'video/mp4', 'video/webm', 'video/quicktime',
             ]);
+
+        $this->addMediaCollection('sponsor_image')
+            ->acceptsMimeTypes([
+                'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+            ])
+            ->singleFile();
     }
 
     public function registerMediaConversions(?Media $media = null): void
@@ -254,5 +260,11 @@ class Campaign extends Model implements HasMedia
             ->format('webp')
             ->quality(85)
             ->withResponsiveImages();
+
+        $this->addMediaConversion('sponsor_thumb')
+            ->fit(Fit::Contain, 400, 224)
+            ->format('webp')
+            ->quality(80)
+            ->nonQueued();
     }
 }

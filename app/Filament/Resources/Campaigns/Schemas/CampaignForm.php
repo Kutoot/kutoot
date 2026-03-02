@@ -97,6 +97,21 @@ class CampaignForm
                             ->customHeaders(['CacheControl' => 'max-age=86400']),
                     ]),
 
+                Section::make('Sponsor Image')
+                    ->description('Upload a sponsored by image for this campaign (16:9 aspect ratio).')
+                    ->collapsible()
+                    ->components([
+                        SpatieMediaLibraryFileUpload::make('sponsor_image')
+                            ->collection('sponsor_image')
+                            ->single()
+                            ->acceptedFileTypes([
+                                'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+                            ])
+                            ->maxSize(5242880) // 5MB for sponsor images
+                            ->conversion('sponsor_thumb')
+                            ->helperText('Recommended size: 400x224px (16:9 aspect ratio). Max file size: 5MB.'),
+                    ]),
+
                 Section::make('Stamp Code Configuration')
                     ->description('Configure the lottery-style stamp code format for this campaign.')
                     ->collapsible()
