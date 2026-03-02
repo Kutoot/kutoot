@@ -249,22 +249,27 @@ class Campaign extends Model implements HasMedia
 
     public function registerMediaConversions(?Media $media = null): void
     {
+        // Conversions for 'media' collection (images and videos)
         $this->addMediaConversion('thumb')
             ->fit(Fit::Contain, 300, 300)
             ->format('webp')
             ->quality(80)
-            ->nonQueued();
+            ->nonQueued()
+            ->onlyApplyOnCollections('media');
 
         $this->addMediaConversion('preview')
             ->fit(Fit::Contain, 800, 600)
             ->format('webp')
             ->quality(85)
-            ->withResponsiveImages();
+            ->withResponsiveImages()
+            ->onlyApplyOnCollections('media');
 
+        // Conversion for 'sponsor_image' collection
         $this->addMediaConversion('sponsor_thumb')
             ->fit(Fit::Contain, 400, 224)
             ->format('webp')
             ->quality(80)
-            ->nonQueued();
+            ->nonQueued()
+            ->onlyApplyOnCollections('sponsor_image');
     }
 }
