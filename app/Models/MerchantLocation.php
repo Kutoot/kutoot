@@ -103,6 +103,16 @@ class MerchantLocation extends Model implements HasMedia
     }
 
     /**
+     * @return BelongsToMany<\App\Models\User, $this>
+     */
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'merchant_location_user')
+            ->withPivot('role')
+            ->withTimestamps();
+    }
+
+    /**
      * @return BelongsToMany<Tag, $this>
      */
     public function tags(): BelongsToMany
@@ -145,6 +155,14 @@ class MerchantLocation extends Model implements HasMedia
     public function loans(): HasMany
     {
         return $this->hasMany(MerchantLocationLoan::class);
+    }
+
+    /**
+     * @return HasOne<MerchantNotificationSetting, $this>
+     */
+    public function notificationSetting(): HasOne
+    {
+        return $this->hasOne(MerchantNotificationSetting::class);
     }
 
     /**

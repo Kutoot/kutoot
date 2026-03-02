@@ -14,6 +14,13 @@ use App\Http\Controllers\Api\V1\MerchantLocationOtpController;
 use App\Http\Controllers\Api\V1\NewsArticleController;
 use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\QrScanController;
+use App\Http\Controllers\Api\V1\Seller\MerchantLocationCouponController;
+use App\Http\Controllers\Api\V1\Seller\MerchantLocationDashboardController;
+use App\Http\Controllers\Api\V1\Seller\MerchantLocationNotificationController;
+use App\Http\Controllers\Api\V1\Seller\MerchantLocationPasswordController;
+use App\Http\Controllers\Api\V1\Seller\MerchantLocationProfileController;
+use App\Http\Controllers\Api\V1\Seller\MerchantLocationSettingsController;
+use App\Http\Controllers\Api\V1\Seller\MerchantLocationVisitorController;
 use App\Http\Controllers\Api\V1\SponsorController;
 use App\Http\Controllers\Api\V1\StampController;
 use App\Http\Controllers\Api\V1\StampReservationController;
@@ -120,7 +127,66 @@ Route::prefix('merchant-locations')->group(function () {
     Route::post('/auth/login', [MerchantLocationAuthController::class, 'login'])
         ->middleware('throttle:5,1')
         ->name('api.v1.merchant-locations.auth.login');
+
+    // Authenticated merchant auth endpoints
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/auth/me', [MerchantLocationAuthController::class, 'me'])
+            ->name('api.v1.merchant-locations.auth.me');
+        Route::post('/auth/logout', [MerchantLocationAuthController::class, 'logout'])
+            ->name('api.v1.merchant-locations.auth.logout');
+    });
 });
+
+// ── Seller (Merchant Location) Dashboard Endpoints ─────────────────────
+Route::prefix('merchant-locations/{merchantLocation}')
+    ->middleware(['auth:sanctum', \App\Http\Middleware\EnsureMerchantLocationAccess::class])
+    ->group(function () {
+        // Dashboard
+        Route::get('/dashboard/summary', [MerchantLocationDashboardController::class, 'summary'])
+            ->name('api.v1.seller.dashboard.summary');
+        Route::get('/dashboard/revenue-trend', [MerchantLocationDashboardController::class, 'revenueTrend'])
+            ->name('api.v1.seller.dashboard.revenue-trend');
+        Route::get('/dashboard/visitors-trend', [MerchantLocationDashboardController::class, 'visitorsTrend'])
+            ->name('api.v1.seller.dashboard.visitors-trend');
+
+        // Visitors / Customer Activity
+        Route::get('/visitors', [MerchantLocationVisitorController::class, 'index'])
+            ->name('api.v1.seller.visitors.index');
+
+        // Store Profile
+        Route::get('/profile', [MerchantLocationProfileController::class, 'show'])
+            ->name('api.v1.seller.profile.show');
+        Route::match(['patch', 'post'], '/profile', [MerchantLocationProfileController::class, 'update'])
+            ->name('api.v1.seller.profile.update');
+
+        // Settings
+        Route::get('/settings/master-admin', [MerchantLocationSettingsController::class, 'masterAdminSettings'])
+            ->name('api.v1.seller.settings.master-admin');
+        Route::get('/settings/bank', [MerchantLocationSettingsController::class, 'bankDetails'])
+            ->name('api.v1.seller.settings.bank');
+        Route::patch('/settings/bank', [MerchantLocationSettingsController::class, 'updateBankDetails'])
+            ->name('api.v1.seller.settings.bank.update');
+
+        // Notification Settings
+        Route::get('/settings/notifications', [MerchantLocationNotificationController::class, 'show'])
+            ->name('api.v1.seller.settings.notifications.show');
+        Route::put('/settings/notifications', [MerchantLocationNotificationController::class, 'update'])
+            ->name('api.v1.seller.settings.notifications.update');
+
+        // Change Password
+        Route::put('/settings/change-password', [MerchantLocationPasswordController::class, 'update'])
+            ->name('api.v1.seller.settings.change-password');
+
+        // Coupons / Deals
+        Route::get('/coupons', [MerchantLocationCouponController::class, 'index'])
+            ->name('api.v1.seller.coupons.index');
+        Route::post('/coupons', [MerchantLocationCouponController::class, 'store'])
+            ->name('api.v1.seller.coupons.store');
+        Route::patch('/coupons/{coupon}', [MerchantLocationCouponController::class, 'update'])
+            ->name('api.v1.seller.coupons.update');
+        Route::delete('/coupons/{coupon}', [MerchantLocationCouponController::class, 'destroy'])
+            ->name('api.v1.seller.coupons.destroy');
+    });
 
 // ── Authenticated user endpoints ─────────────────────────────────────────
 Route::middleware('auth:sanctum')->group(function () {

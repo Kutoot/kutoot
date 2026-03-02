@@ -14,6 +14,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Seed world data (countries, states, cities) if not already present
+        if (\Nnjeim\World\Models\Country::query()->count() === 0) {
+            $this->call(WorldSeeder::class);
+        }
+
         $this->call([
             RolesAndPermissionsSeeder::class,
             BasePlanSeeder::class,

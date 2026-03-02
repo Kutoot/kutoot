@@ -70,4 +70,61 @@ class MerchantLocationAuthController extends Controller
             ],
         ]);
     }
+
+    /**
+     * Get the authenticated merchant user's profile and locations.
+     */
+    public function me(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $locations = $user->merchantLocations()
+            ->with('merchant', 'merchantCategory')
+            ->get();
+
+        $primaryLocation = $locations->first();
+
+        if (! $primaryLocation) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No store associated with this account.',
+            ], 404);
+        }
+
+        $pivotRole = $primaryLocation->pivot->role ?? 'owner';
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'sellerId' => $user->id,
+                'shopId' => $primaryLocation->id,
+                'shopName' => $primaryLocation->branch_name,
+                'ownerName' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->mobile,
+                'status' => $primaryLocation->is_active ? 'active' : 'inactive',
+                'role' => $pivotRole,
+                'category' => $primaryLocation->merchantCategory?->name,
+                'merchantName' => $primaryLocation->merchant?->name,
+                'locations' => $locations->map(fn ($loc) => [
+                    'id' => $loc->id,
+                    'branch_name' => $loc->branch_name,
+                    'role' => $loc->pivot->role ?? 'staff',
+                ]),
+            ],
+        ]);
+    }
+
+    /**
+     * Logout the merchant user (revoke tokens).
+     */
+    public function logout(Request $request): JsonResponse
+    {
+        $request->user()->currentAccessToken()->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Logged out successfully.',
+        ]);
+    }
 }
