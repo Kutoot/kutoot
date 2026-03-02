@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CampaignController;
 use App\Http\Controllers\Api\V1\CouponController;
+use App\Http\Controllers\Api\V1\NewsletterController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\FeaturedBannerController;
 use App\Http\Controllers\Api\V1\MarketingBannerController;
@@ -97,6 +98,11 @@ Route::get('/sponsors', [SponsorController::class, 'index'])
 // ── Tags (public) ───────────────────────────────────────────────────────
 Route::get('/tags', [TagController::class, 'index'])
     ->name('api.v1.tags.index');
+
+// ── Newsletter (public) ─────────────────────────────────────────────────
+Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])
+    ->middleware('throttle:5,1')
+    ->name('api.v1.newsletter.subscribe');
 
 // ── Merchant Location Registration & Auth (public) ─────────────────────
 Route::prefix('merchant-locations')->group(function () {
@@ -207,6 +213,8 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('api.v1.coupons.redeem');
     Route::post('/coupons/verify-payment', [CouponController::class, 'verifyPayment'])
         ->name('api.v1.coupons.verify-payment');
+    Route::post('/coupons/calculate', [CouponController::class, 'calculate'])
+        ->name('api.v1.coupons.calculate');
 
     // Subscriptions (auth-protected)
     Route::get('/subscriptions/current', [SubscriptionController::class, 'current'])

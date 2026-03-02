@@ -21,13 +21,8 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             RolesAndPermissionsSeeder::class,
-            BasePlanSeeder::class,
             SuperAdminSeeder::class,
-            DummyDataSeeder::class,
-            CampaignSeeder::class,
-            QrCodeSeeder::class,
-            MarketingSeeder::class,
-            StoreDataSeeder::class,
+            ComprehensiveSeeder::class,
         ]);
     }
 }

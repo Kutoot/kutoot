@@ -93,6 +93,66 @@ class CouponController extends Controller
     }
 
     /**
+     * Calculate coupon redemption
+     *
+     * Calculates the bill breakdown (discount, fees, final amount) without creating
+     * any transaction. Use this for preview before payment.
+     *
+     * @bodyParam bill_amount numeric required The original bill amount. Example: 500
+     * @bodyParam merchant_location_id int required The merchant location ID. Example: 1
+     * @bodyParam coupon_id int optional The coupon to apply. Example: 5
+     *
+     * @response 200 { "original_amount": 500, "discount": 50, "convenience_fee": 10, "gst": 1.8, "final_amount": 461.8, "coupon_discount": 50 }
+     */
+    public function calculate(Request $request): JsonResponse
+    {
+        $request->validate([
+            'bill_amount' => 'required|numeric|min:0',
+            'merchant_location_id' => 'required|exists:merchant_locations,id',
+            'coupon_id' => 'nullable|exists:discount_coupons,id',
+        ]);
+
+        $amount = (float) $request->input('bill_amount');
+
+        $platformFee = config('app.platform_fee', 10);
+        if (config('app.platform_fee_type') === 'percentage') {
+            $platformFee = ($amount * $platformFee) / 100;
+        }
+        $gstAmount = round(($platformFee * config('app.gst_rate', 18)) / 100, 2);
+
+        $discountAmount = 0.0;
+        $couponDiscount = 0.0;
+
+        if ($request->filled('coupon_id')) {
+            $coupon = DiscountCoupon::active()->find($request->input('coupon_id'));
+            if ($coupon) {
+                if ($coupon->discount_type === DiscountType::Fixed) {
+                    $discountAmount = (float) $coupon->discount_value;
+                } else {
+                    $discountAmount = ($amount * (float) $coupon->discount_value) / 100;
+                }
+
+                if ($coupon->max_discount_amount) {
+                    $discountAmount = min($discountAmount, (float) $coupon->max_discount_amount);
+                }
+                $couponDiscount = round($discountAmount, 2);
+            }
+        }
+
+        $finalBillAfterDiscount = max(0, $amount - $discountAmount);
+        $grandTotal = round($finalBillAfterDiscount + $platformFee + $gstAmount, 2);
+
+        return response()->json([
+            'original_amount' => $amount,
+            'discount' => round($discountAmount, 2),
+            'convenience_fee' => round($platformFee, 2),
+            'gst' => $gstAmount,
+            'final_amount' => $grandTotal,
+            'coupon_discount' => $couponDiscount,
+        ]);
+    }
+
+    /**
      * Redeem coupon
      *
      * Initiates a coupon redemption by creating a Razorpay order. The client must
