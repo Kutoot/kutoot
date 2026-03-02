@@ -103,7 +103,6 @@ class CampaignForm
                     ->components([
                         SpatieMediaLibraryFileUpload::make('sponsor_image')
                             ->collection('sponsor_image')
-                            ->single()
                             ->acceptedFileTypes([
                                 'image/jpeg', 'image/png', 'image/webp', 'image/gif',
                             ])
