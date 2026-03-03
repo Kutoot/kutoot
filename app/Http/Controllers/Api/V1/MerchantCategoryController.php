@@ -28,6 +28,7 @@ class MerchantCategoryController extends Controller
         $categories = Cache::remember('merchant-categories:active:'.md5($request->input('search', '')), 300, function () use ($request) {
             return MerchantCategory::query()
                 ->where('is_active', true)
+                ->with('media')
                 ->when($request->input('search'), fn ($q, $search) => $q->where('name', 'like', "%{$search}%"))
                 ->orderBy('serial')
                 ->orderBy('name')

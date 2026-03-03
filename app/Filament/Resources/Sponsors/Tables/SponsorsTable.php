@@ -7,7 +7,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -21,9 +21,13 @@ class SponsorsTable
                     ->searchable(),
                 TextColumn::make('type')
                     ->searchable(),
-                ImageColumn::make('logo')
+                SpatieMediaLibraryImageColumn::make('logo')
+                    ->collection('logo')
+                    ->conversion('thumb')
                     ->circular(),
-                ImageColumn::make('banner'),
+                SpatieMediaLibraryImageColumn::make('banner')
+                    ->collection('banner')
+                    ->conversion('thumb'),
                 TextColumn::make('link')
                     ->searchable(),
                 TextColumn::make('serial')

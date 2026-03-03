@@ -91,7 +91,7 @@ class CampaignForm
                                 'image/jpeg', 'image/png', 'image/webp', 'image/gif',
                                 'video/mp4', 'video/webm', 'video/quicktime',
                             ])
-                            ->maxSize(102400)
+                            ->maxSize(config('upload.max_file_size_kb'))
                             ->conversion('thumb')
                             ->responsiveImages()
                             ->customHeaders(['CacheControl' => 'max-age=86400']),
@@ -106,9 +106,9 @@ class CampaignForm
                             ->acceptedFileTypes([
                                 'image/jpeg', 'image/png', 'image/webp', 'image/gif',
                             ])
-                            ->maxSize(5242880) // 5MB for sponsor images
+                            ->maxSize(config('upload.max_file_size_kb'))
                             ->conversion('sponsor_thumb')
-                            ->helperText('Recommended size: 400x224px (16:9 aspect ratio). Max file size: 5MB.'),
+                            ->helperText('Recommended size: 400x224px (16:9 aspect ratio).'),
                     ]),
 
                 Section::make('Stamp Code Configuration')

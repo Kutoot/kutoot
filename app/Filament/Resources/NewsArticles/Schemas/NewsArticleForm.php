@@ -36,7 +36,7 @@ class NewsArticleForm
                     ->image()
                     ->conversion('thumb')
                     ->responsiveImages()
-                    ->maxSize(2048),
+                    ->maxSize(config('upload.max_file_size_kb')),
                 Toggle::make('is_active')
                     ->default(true)
                     ->required(),

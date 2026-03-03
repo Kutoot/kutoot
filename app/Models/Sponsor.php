@@ -4,17 +4,19 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Image\Enums\Fit;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class Sponsor extends Model
+class Sponsor extends Model implements HasMedia
 {
     /** @use HasFactory<\Database\Factories\SponsorFactory> */
-    use HasFactory;
+    use HasFactory, InteractsWithMedia;
 
     protected $fillable = [
         'name',
         'type',
-        'logo',
-        'banner',
         'link',
         'serial',
         'is_active',
@@ -29,5 +31,31 @@ class Sponsor extends Model
             'is_active' => 'boolean',
             'serial' => 'integer',
         ];
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('logo')
+            ->singleFile()
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml']);
+
+        $this->addMediaCollection('banner')
+            ->singleFile()
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp']);
+    }
+
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->addMediaConversion('thumb')
+            ->fit(Fit::Contain, 300, 300)
+            ->format('webp')
+            ->quality(80)
+            ->nonQueued();
+
+        $this->addMediaConversion('preview')
+            ->fit(Fit::Contain, 800, 600)
+            ->format('webp')
+            ->quality(85)
+            ->withResponsiveImages();
     }
 }

@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources\Sponsors\Schemas;
 
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\FileUpload;
 use Filament\Schemas\Schema;
 
 class SponsorForm
@@ -20,14 +20,18 @@ class SponsorForm
                     ->required()
                     ->maxLength(255)
                     ->default('Sponsor'),
-                FileUpload::make('logo')
+                SpatieMediaLibraryFileUpload::make('logo')
+                    ->collection('logo')
                     ->image()
-                    ->directory('sponsors')
-                    ->maxSize(2048),
-                FileUpload::make('banner')
+                    ->conversion('thumb')
+                    ->responsiveImages()
+                    ->maxSize(config('upload.max_file_size_kb')),
+                SpatieMediaLibraryFileUpload::make('banner')
+                    ->collection('banner')
                     ->image()
-                    ->directory('sponsors-banners')
-                    ->maxSize(4096),
+                    ->conversion('thumb')
+                    ->responsiveImages()
+                    ->maxSize(config('upload.max_file_size_kb')),
                 TextInput::make('link')
                     ->url()
                     ->maxLength(2048),

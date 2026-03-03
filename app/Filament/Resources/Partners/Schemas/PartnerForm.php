@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Partners\Schemas;
 
-use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
@@ -16,11 +16,13 @@ class PartnerForm
                 TextInput::make('name')
                     ->required()
                     ->maxLength(255),
-                FileUpload::make('logo')
+                SpatieMediaLibraryFileUpload::make('logo')
                     ->label('Logo')
+                    ->collection('logo')
                     ->image()
-                    ->directory('sponsors')
-                    ->maxSize(2048)
+                    ->conversion('thumb')
+                    ->responsiveImages()
+                    ->maxSize(config('upload.max_file_size_kb'))
                     ->required(),
                 TextInput::make('link')
                     ->label('Website URL')

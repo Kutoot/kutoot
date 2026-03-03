@@ -215,6 +215,8 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('api.v1.coupons.verify-payment');
     Route::post('/coupons/calculate', [CouponController::class, 'calculate'])
         ->name('api.v1.coupons.calculate');
+    Route::post('/coupons/pay-without-coupon', [CouponController::class, 'payWithoutCoupon'])
+        ->name('api.v1.coupons.pay-without-coupon');
 
     // Subscriptions (auth-protected)
     Route::get('/subscriptions/current', [SubscriptionController::class, 'current'])
