@@ -207,16 +207,16 @@ Route::middleware('auth:sanctum')->group(function () {
     // Coupons
     Route::get('/coupons', [CouponController::class, 'index'])
         ->name('api.v1.coupons.index');
-    Route::get('/coupons/{coupon}', [CouponController::class, 'show'])
-        ->name('api.v1.coupons.show');
-    Route::post('/coupons/{coupon}/redeem', [CouponController::class, 'redeem'])
-        ->name('api.v1.coupons.redeem');
     Route::post('/coupons/verify-payment', [CouponController::class, 'verifyPayment'])
         ->name('api.v1.coupons.verify-payment');
     Route::post('/coupons/calculate', [CouponController::class, 'calculate'])
         ->name('api.v1.coupons.calculate');
     Route::post('/coupons/pay-without-coupon', [CouponController::class, 'payWithoutCoupon'])
         ->name('api.v1.coupons.pay-without-coupon');
+    Route::get('/coupons/{coupon}', [CouponController::class, 'show'])
+        ->name('api.v1.coupons.show');
+    Route::post('/coupons/{coupon}/redeem', [CouponController::class, 'redeem'])
+        ->name('api.v1.coupons.redeem');
 
     // Subscriptions (auth-protected)
     Route::get('/subscriptions/current', [SubscriptionController::class, 'current'])
