@@ -44,7 +44,9 @@ class CampaignForm
                     ->default('active')
                     ->required(),
                 DatePicker::make('start_date')
-                    ->required(),
+                    ->required()
+                    ->minDate(now()->startOfDay())
+                    ->rule('after_or_equal:today'),
                 TextInput::make('reward_cost_target')
                     ->required()
                     ->numeric(),

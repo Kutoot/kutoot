@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\CouponController;
 use App\Http\Controllers\Api\V1\NewsletterController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\FeaturedBannerController;
+use App\Http\Controllers\Api\V1\HeroSettingController;
 use App\Http\Controllers\Api\V1\MarketingBannerController;
 use App\Http\Controllers\Api\V1\MerchantCategoryController;
 use App\Http\Controllers\Api\V1\MerchantLocationApplicationController;
@@ -74,6 +75,10 @@ Route::get('/campaigns/{campaign}', [CampaignController::class, 'show'])
 // Subscription plans (public, no auth needed)
 Route::get('/subscriptions/plans', [SubscriptionController::class, 'plans'])
     ->name('api.v1.subscriptions.plans');
+
+// ── Hero Settings (public, no auth) ─────────────────────────────────────
+Route::get('/hero-settings', [HeroSettingController::class, 'index'])
+    ->name('api.v1.hero-settings.index');
 
 // ── Marketing (public, no auth) ─────────────────────────────────────────
 Route::get('/marketing-banners', [MarketingBannerController::class, 'index'])
