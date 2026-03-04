@@ -15,6 +15,7 @@ class HeroSetting extends Model
         'title',
         'description',
         'is_active',
+        'locale',
     ];
 
     protected function casts(): array
@@ -34,10 +35,25 @@ class HeroSetting extends Model
     }
 
     /**
-     * Get the active hero setting (singleton pattern).
+     * Scope a query to the given locale.
      */
-    public static function active(): ?self
+    public function scopeForLocale($query, ?string $locale = null)
     {
-        return static::where('is_active', true)->latest()->first();
+        $locale = $locale ?? app()->getLocale();
+        return $query->where('locale', $locale);
+    }
+
+    /**
+     * Get the active hero setting (singleton pattern).
+     *
+     * @param string|null $locale
+     */
+    public static function active(?string $locale = null): ?self
+    {
+        $locale = $locale ?? app()->getLocale();
+        return static::where('is_active', true)
+            ->where('locale', $locale)
+            ->latest()
+            ->first();
     }
 }

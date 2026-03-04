@@ -1150,13 +1150,18 @@ class ComprehensiveSeeder extends Seeder
         // ───────────────────────────────────────────────
         $this->command?->info('Seeding hero settings...');
 
-        HeroSetting::updateOrCreate(
-            ['is_active' => true],
-            [
-                'title' => 'Shop, Collect Stamps & Win Big Rewards!',
-                'description' => 'Join thousands of smart shoppers earning stamps at your favourite stores. Redeem for iPhones, cars, jewellery & more.',
-            ],
-        );
+        // include a locale field so we can seed per language. if you only
+        // support the default locale you can use config('app.locale') here
+        // or adjust the loop to iterate over config('app.supported_locales').
+        foreach (['en'] as $locale) {
+            HeroSetting::updateOrCreate(
+                ['is_active' => true, 'locale' => $locale],
+                [
+                    'title' => 'Shop, Collect Stamps & Win Big Rewards!',
+                    'description' => 'Join thousands of smart shoppers earning stamps at your favourite stores. Redeem for iPhones, cars, jewellery & more.',
+                ],
+            );
+        }
 
         // ───────────────────────────────────────────────
         // Done!
