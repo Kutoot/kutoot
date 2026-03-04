@@ -14,27 +14,29 @@ class AddDeferredForeignKeys extends Migration
     {
         // users.primary_campaign_id → campaigns (users created before campaigns)
         Schema::table('users', function (Blueprint $table) {
-            $sm = Schema::getConnection()->getDoctrineSchemaManager();
-            $existing = collect($sm->listTableForeignKeys('users'))
-                ->map(fn($fk) => $fk->getName())
-                ->all();
-            if (! in_array('users_primary_campaign_id_foreign', $existing, true)) {
+            try {
                 $table->foreign('primary_campaign_id')
                     ->references('id')->on('campaigns')
                     ->nullOnDelete();
+            } catch (\Exception $e) {
+                // Foreign key already exists, skip
+                if (!str_contains($e->getMessage(), 'Duplicate foreign key')) {
+                    throw $e;
+                }
             }
         });
 
         // merchant_locations.merchant_category_id → merchant_categories (locations created before categories)
         Schema::table('merchant_locations', function (Blueprint $table) {
-            $sm = Schema::getConnection()->getDoctrineSchemaManager();
-            $existing = collect($sm->listTableForeignKeys('merchant_locations'))
-                ->map(fn($fk) => $fk->getName())
-                ->all();
-            if (! in_array('merchant_locations_merchant_category_id_foreign', $existing, true)) {
+            try {
                 $table->foreign('merchant_category_id')
                     ->references('id')->on('merchant_categories')
                     ->nullOnDelete();
+            } catch (\Exception $e) {
+                // Foreign key already exists, skip
+                if (!str_contains($e->getMessage(), 'Duplicate foreign key')) {
+                    throw $e;
+                }
             }
         });
     }
