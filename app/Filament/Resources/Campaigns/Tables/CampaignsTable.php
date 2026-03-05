@@ -6,7 +6,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
+use App\Filament\Tables\Columns\MediaColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -16,7 +16,7 @@ class CampaignsTable
     {
         return $table
             ->columns([
-                SpatieMediaLibraryImageColumn::make('media')
+                MediaColumn::make('media')
                     ->collection('media')
                     ->conversion('thumb')
                     ->limit(3)

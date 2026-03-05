@@ -134,6 +134,14 @@ class MerchantLocation extends Model implements HasMedia
     }
 
     /**
+     * @return HasOne<QrCode, $this>
+     */
+    public function primaryQrCode(): HasOne
+    {
+        return $this->hasOne(QrCode::class)->where('is_primary', true);
+    }
+
+    /**
      * @return HasMany<DiscountCoupon, $this>
      */
     public function coupons(): HasMany

@@ -29,6 +29,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Register Observers
+        \App\Models\QrCode::observe(\App\Observers\QrCodeObserver::class);
+
         // API rate limiting
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());

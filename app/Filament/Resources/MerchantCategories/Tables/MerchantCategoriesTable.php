@@ -7,7 +7,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
+use App\Filament\Tables\Columns\MediaColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -19,11 +19,11 @@ class MerchantCategoriesTable
             ->columns([
                 TextColumn::make('name')
                     ->searchable(),
-                SpatieMediaLibraryImageColumn::make('image')
+                MediaColumn::make('image')
                     ->collection('image')
                     ->conversion('thumb')
                     ->circular(),
-                SpatieMediaLibraryImageColumn::make('icon')
+                MediaColumn::make('icon')
                     ->collection('icon')
                     ->conversion('thumb')
                     ->circular(),
