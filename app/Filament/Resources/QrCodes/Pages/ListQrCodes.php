@@ -33,7 +33,7 @@ class ListQrCodes extends ListRecords
                 ])
                 ->action(function (array $data) {
                     $quantity = (int) $data['quantity'];
-                    
+
                     for ($i = 0; $i < $quantity; $i++) {
                         QrCode::create([
                             'unique_code' => 'KUT-' . strtoupper(Str::random(8)),

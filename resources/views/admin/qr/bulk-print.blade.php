@@ -121,7 +121,7 @@
         button.print-btn:hover {
             background-color: #4338ca;
         }
-        
+
         .back-btn {
             color: #4b5563;
             text-decoration: none;
