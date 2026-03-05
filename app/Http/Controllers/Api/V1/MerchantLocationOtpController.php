@@ -34,7 +34,9 @@ class MerchantLocationOtpController extends Controller
         Log::info("Merchant Location Phone OTP for [{$phone}]: {$otp}");
 
         if (app()->isProduction()) {
-            $message = "Your Kutoot store registration OTP is: {$otp}. Valid for 5 minutes. Do not share this code. -Team Kutoot";
+            // $message = "Your Kutoot store registration OTP is: {$otp}. Valid for 5 minutes. Do not share this code. -Team Kutoot";
+            $message = "Your Kutoot login OTP is: $otp This code is valid for 10 minutes. Use it to securely access your Kutoot account. Do not share this code with anyone. -Team Kutoot | Shopping is Winning";
+
             $this->sms->send($phone, $message);
         }
 

@@ -27,8 +27,8 @@ class DashboardController extends Controller
         $plan = $subscription ? SubscriptionPlan::find($subscription->plan_id) : null;
 
         $stampsCount = $user->stamps()->count();
-        $totalCouponsUsed = $user->couponRedemptions()->count();
-        $totalDiscountRedeemed = (float) $user->couponRedemptions()->sum('discount_applied');
+        $totalCouponsUsed = $subscription ? (int) $subscription->bills_used : 0;
+        $totalDiscountRedeemed = $subscription ? (float) $subscription->amount_redeemed : 0.0;
 
         $remainingBills = $plan
             ? max(0, $plan->max_discounted_bills - $totalCouponsUsed)

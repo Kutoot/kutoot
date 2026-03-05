@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\DiscountType;
 use App\Enums\PaymentStatus;
-use App\Enums\SubscriptionStatus;
 use App\Enums\TransactionType;
 use App\Events\CommissionEarned;
 use App\Http\Controllers\Controller;
@@ -12,7 +11,6 @@ use App\Http\Requests\RedeemCouponRequest;
 use App\Http\Requests\VerifyPaymentRequest;
 use App\Http\Resources\DiscountCouponResource;
 use App\Http\Resources\TransactionResource;
-use App\Models\CouponRedemption;
 use App\Models\DiscountCoupon;
 use App\Models\MerchantLocation;
 use App\Models\SubscriptionPlan;
@@ -22,7 +20,6 @@ use App\Services\Payments\PaymentManager;
 use App\Services\StampService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -83,18 +80,13 @@ class CouponController extends Controller
             ->take(min((int) $request->input('per_page', 50), 100))
             ->get();
 
-        // Calculate user's remaining plan limits
+        // Calculate user's remaining plan limits from subscription counters
         $usedBillsCount = 0;
         $usedRedeemAmount = 0.0;
 
-        if ($subscription && $subscription->id) {
-            $subscriptionStart = $subscription->created_at;
-            $usedBillsCount = CouponRedemption::where('user_id', $user->id)
-                ->where('created_at', '>=', $subscriptionStart)
-                ->count();
-            $usedRedeemAmount = (float) CouponRedemption::where('user_id', $user->id)
-                ->where('created_at', '>=', $subscriptionStart)
-                ->sum('discount_applied');
+        if ($subscription) {
+            $usedBillsCount = (int) $subscription->bills_used;
+            $usedRedeemAmount = (float) $subscription->amount_redeemed;
         }
 
         $remainingBills = $plan ? max(0, $plan->max_discounted_bills - $usedBillsCount) : 0;
@@ -285,14 +277,10 @@ class CouponController extends Controller
         if ($coupon) {
             // Check plan-level limits
             $subscription = $user->effectiveSubscription();
-            if ($subscription && $subscription->id) {
+            if ($subscription) {
                 $plan = SubscriptionPlan::find($subscription->plan_id);
-                if ($plan) {
-                    $subscriptionStart = $subscription->created_at;
-                    $usedBills = CouponRedemption::where('user_id', $user->id)
-                        ->where('created_at', '>=', $subscriptionStart)
-                        ->count();
-                    if ($usedBills >= $plan->max_discounted_bills) {
+                if ($plan && $plan->max_discounted_bills > 0) {
+                    if ((int) $subscription->bills_used >= $plan->max_discounted_bills) {
                         $warnings[] = "You have used all {$plan->max_discounted_bills} discounted bills for your plan.";
                         $coupon = null;
                     }
@@ -313,19 +301,16 @@ class CouponController extends Controller
 
             // Check plan-level max redeemable amount
             $subscription = $user->effectiveSubscription();
-            if ($subscription && $subscription->id) {
+            if ($subscription) {
                 $plan = SubscriptionPlan::find($subscription->plan_id);
                 if ($plan && $plan->max_redeemable_amount > 0) {
-                    $usedDiscount = (float) CouponRedemption::where('user_id', $user->id)
-                        ->where('created_at', '>=', $subscription->created_at)
-                        ->sum('discount_applied');
-                    $remainingDiscount = max(0, (float) $plan->max_redeemable_amount - $usedDiscount);
+                    $remainingDiscount = max(0, (float) $plan->max_redeemable_amount - (float) $subscription->amount_redeemed);
                     if ($discountAmount > $remainingDiscount) {
                         $discountAmount = $remainingDiscount;
                         if ($remainingDiscount <= 0) {
                             $warnings[] = 'You have reached your maximum redeemable discount for this plan period.';
                         } else {
-                            $warnings[] = "Discount capped at ₹" . round($remainingDiscount, 2) . ' (remaining plan limit).';
+                            $warnings[] = 'Discount capped at ₹'.round($remainingDiscount, 2).' (remaining plan limit).';
                         }
                     }
                 }
@@ -423,14 +408,19 @@ class CouponController extends Controller
 
         // ── Validation: Plan-level bill limit ──
         $plan = $planId ? SubscriptionPlan::find($planId) : null;
-        if ($plan && $subscription->id) {
-            $subscriptionStart = $subscription->created_at;
-            $usedBills = CouponRedemption::where('user_id', $user->id)
-                ->where('created_at', '>=', $subscriptionStart)
-                ->count();
-            if ($usedBills >= $plan->max_discounted_bills) {
+        if ($plan && $subscription && $plan->max_discounted_bills > 0) {
+            if ((int) $subscription->bills_used >= $plan->max_discounted_bills) {
                 return response()->json([
                     'error' => "You have used all {$plan->max_discounted_bills} discounted bills for your plan period.",
+                ], 422);
+            }
+        }
+
+        // ── Validation: Plan-level max redeemable amount ──
+        if ($plan && $subscription && $plan->max_redeemable_amount > 0) {
+            if ((float) $subscription->amount_redeemed >= (float) $plan->max_redeemable_amount) {
+                return response()->json([
+                    'error' => 'You have reached your maximum redeemable discount for this plan period.',
                 ], 422);
             }
         }
@@ -455,11 +445,8 @@ class CouponController extends Controller
                 }
 
                 // ── Validation: Plan-level max redeemable amount ──
-                if ($plan && $plan->max_redeemable_amount > 0 && $subscription->id) {
-                    $usedDiscount = (float) CouponRedemption::where('user_id', $user->id)
-                        ->where('created_at', '>=', $subscription->created_at)
-                        ->sum('discount_applied');
-                    $remainingDiscount = max(0, (float) $plan->max_redeemable_amount - $usedDiscount);
+                if ($plan && $plan->max_redeemable_amount > 0 && $subscription) {
+                    $remainingDiscount = max(0, (float) $plan->max_redeemable_amount - (float) $subscription->amount_redeemed);
                     $discountAmount = min($discountAmount, $remainingDiscount);
                 }
 
@@ -467,7 +454,7 @@ class CouponController extends Controller
                 $grandTotal = $finalBillAfterDiscount + $platformFee + $gstAmount;
                 $commissionAmount = ($finalBillAfterDiscount * $merchantLocation->commission_percentage) / 100;
 
-                $idempotencyKey = 'coupon_' . $user->id . '_' . $coupon->id . '_' . Str::uuid();
+                $idempotencyKey = 'coupon_'.$user->id.'_'.$coupon->id.'_'.Str::uuid();
 
                 $transaction = Transaction::create([
                     'user_id' => $user->id,
@@ -490,7 +477,7 @@ class CouponController extends Controller
                 if ($grandTotal <= 0) {
                     $transaction->update([
                         'payment_status' => PaymentStatus::Paid,
-                        'payment_id' => 'zero_amount_' . $transaction->id,
+                        'payment_id' => 'zero_amount_'.$transaction->id,
                     ]);
 
                     $this->redemptionService->redeemCoupon($user, $coupon, $transaction, [
@@ -500,6 +487,12 @@ class CouponController extends Controller
                         'gst_amount' => $gstAmount,
                         'total_paid' => $grandTotal,
                     ]);
+
+                    // Increment subscription billing counters atomically
+                    if ($subscription && $subscription->id) {
+                        $subscription->increment('bills_used');
+                        $subscription->increment('amount_redeemed', $discountAmount);
+                    }
 
                     $this->stampService->awardStampsForCouponRedemption($transaction, isset($validated['campaign_id']) ? (int) $validated['campaign_id'] : null);
 
@@ -579,6 +572,13 @@ class CouponController extends Controller
                         'gst_amount' => (float) $transaction->gst_amount,
                         'total_paid' => (float) $transaction->total_amount,
                     ]);
+
+                    // Increment subscription billing counters atomically
+                    $subscription = $user->effectiveSubscription();
+                    if ($subscription && $subscription->id) {
+                        $subscription->increment('bills_used');
+                        $subscription->increment('amount_redeemed', (float) $transaction->discount_amount);
+                    }
                 }
             }
 
@@ -628,7 +628,7 @@ class CouponController extends Controller
                 $grandTotal = $amount + $platformFee + $gstAmount;
                 $commissionAmount = ($amount * $merchantLocation->commission_percentage) / 100;
 
-                $idempotencyKey = 'nocoupon_' . $user->id . '_' . Str::uuid();
+                $idempotencyKey = 'nocoupon_'.$user->id.'_'.Str::uuid();
 
                 $transaction = Transaction::create([
                     'user_id' => $user->id,
@@ -651,7 +651,7 @@ class CouponController extends Controller
                 if ($grandTotal <= 0) {
                     $transaction->update([
                         'payment_status' => PaymentStatus::Paid,
-                        'payment_id' => 'zero_amount_' . $transaction->id,
+                        'payment_id' => 'zero_amount_'.$transaction->id,
                     ]);
 
                     $this->stampService->awardStampsForCouponRedemption($transaction, $campaignId);
@@ -680,7 +680,7 @@ class CouponController extends Controller
             });
         } catch (\Exception $e) {
             return response()->json([
-                'error' => 'Failed to process payment: ' . $e->getMessage(),
+                'error' => 'Failed to process payment: '.$e->getMessage(),
             ], 500);
         }
     }

@@ -212,15 +212,21 @@ class User extends Authenticatable implements FilamentUser, HasEmailAuthenticati
             return $active;
         }
 
-        // Fallback to Base Plan (is_default)
+        // Fallback to Base Plan (is_default) — persist to DB so billing counters work
         $basePlan = SubscriptionPlan::where('is_default', true)->first();
 
         if ($basePlan) {
-            return new UserSubscription([
+            $subscription = UserSubscription::create([
                 'user_id' => $this->id,
                 'plan_id' => $basePlan->id,
                 'status' => SubscriptionStatus::Active,
+                'expires_at' => null,
             ]);
+
+            // Refresh the relationship so subsequent calls find the new record
+            $this->load('activeSubscription');
+
+            return $subscription;
         }
 
         return null;

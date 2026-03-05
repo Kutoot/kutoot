@@ -49,6 +49,19 @@ class EditTransaction extends EditRecord
         ];
     }
 
+    protected function getRedirectUrl(): string
+    {
+        return static::getResource()::getUrl('index');
+    }
+
+    protected function getSavedNotification(): ?Notification
+    {
+        return Notification::make()
+            ->success()
+            ->title('Transaction Updated')
+            ->body('The transaction has been updated successfully.');
+    }
+
     private function processRefund(array $data): void
     {
         $transaction = $this->record;

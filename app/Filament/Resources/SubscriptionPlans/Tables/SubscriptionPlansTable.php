@@ -38,17 +38,21 @@ class SubscriptionPlansTable
                     ->boolean()
                     ->label('Default'),
                 TextColumn::make('stamps_on_purchase')
-                    ->label('Stamps on Buy')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('stamp_denomination')
-                    ->label('Denomination')
-                    ->prefix('₹')
+                    ->label('Bonus Stamps')
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('stamps_per_denomination')
-                    ->label('Stamps/Denom')
-                    ->numeric()
+                    ->label('Transaction Stamps')
+                    ->formatStateUsing(function ($state, $record): string {
+                        $stamps = $record->stamps_per_denomination ?? 0;
+                        $denom = $record->stamp_denomination ?? 0;
+
+                        if ($stamps <= 0 || $denom <= 0) {
+                            return '—';
+                        }
+
+                        return "{$stamps} stamps per ₹{$denom} bill";
+                    })
                     ->sortable(),
                 TextColumn::make('max_discounted_bills')
                     ->numeric()
@@ -67,8 +71,18 @@ class SubscriptionPlansTable
                     ->sortable(),
                 TextColumn::make('coupon_categories_count')
                     ->counts('couponCategories')
-                    ->label('Coupon Cats')
-                    ->sortable(),
+                    ->label('Coupon Access')
+                    ->formatStateUsing(function ($state, $record): string {
+                        $categories = $record->couponCategories()->pluck('name');
+
+                        if ($categories->isEmpty()) {
+                            return 'No deals';
+                        }
+
+                        return 'Access to: '.$categories->join(' + ').' deals';
+                    })
+                    ->sortable()
+                    ->wrap(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

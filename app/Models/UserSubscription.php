@@ -16,6 +16,8 @@ class UserSubscription extends Model
         'user_id',
         'plan_id',
         'status',
+        'bills_used',
+        'amount_redeemed',
         'expires_at',
     ];
 
@@ -26,6 +28,8 @@ class UserSubscription extends Model
     {
         return [
             'status' => SubscriptionStatus::class,
+            'bills_used' => 'integer',
+            'amount_redeemed' => 'decimal:2',
             'expires_at' => 'datetime',
         ];
     }
