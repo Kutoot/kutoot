@@ -86,6 +86,21 @@ class SubscriptionPlan extends Model
     }
 
     /**
+     * Ensure only one plan is marked as best value at a time.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (SubscriptionPlan $plan) {
+            if ($plan->best_value) {
+                // clear flag on other plans before saving this one
+                static::where('id', '!=', $plan->id)
+                    ->where('best_value', true)
+                    ->update(['best_value' => false]);
+            }
+        });
+    }
+
+    /**
      * @return BelongsToMany<Campaign, $this>
      */
     public function campaigns(): BelongsToMany

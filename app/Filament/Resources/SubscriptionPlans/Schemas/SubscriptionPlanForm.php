@@ -36,6 +36,9 @@ class SubscriptionPlanForm
                     ->numeric()
                     ->nullable()
                     ->prefix('₹'),
+                Toggle::make('best_value')
+                    ->label('Best Value / Recommended')
+                    ->helperText('Mark this plan as the best value or most popular option. The frontend will show a badge on cards.'),
                 Toggle::make('is_default')
                     ->label('Default Plan')
                     ->helperText('New users will be assigned to this plan automatically.'),

@@ -24,6 +24,10 @@ class SubscriptionPlansTable
                 TextColumn::make('price')
                     ->money('INR')
                     ->sortable(),
+                IconColumn::make('best_value')
+                    ->boolean()
+                    ->label('Best Value')
+                    ->tooltip('Marked as best-value / recommended plan'),
                 TextColumn::make('original_price')
                     ->label('MRP')
                     ->money('INR')
