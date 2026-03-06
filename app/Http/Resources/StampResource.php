@@ -19,6 +19,7 @@ class StampResource extends JsonResource
             'id' => $this->id,
             'code' => $this->code,
             'source' => $this->source,
+            'gift_note' => $this->gift_note,
             'status' => $this->status,
             'reserved_at' => $this->reserved_at?->toISOString(),
             'expires_at' => $this->expires_at?->toISOString(),

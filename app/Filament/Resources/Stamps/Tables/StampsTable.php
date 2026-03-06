@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Stamps\Tables;
 
+use App\Enums\StampSource;
 use App\Enums\StampStatus;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -26,6 +27,10 @@ class StampsTable
                 TextColumn::make('source')
                     ->badge()
                     ->searchable(),
+                TextColumn::make('gift_note')
+                    ->label('Gift Label')
+                    ->placeholder('—')
+                    ->toggleable(),
                 TextColumn::make('status')
                     ->badge()
                     ->sortable(),
@@ -54,6 +59,9 @@ class StampsTable
             ->filters([
                 SelectFilter::make('status')
                     ->options(StampStatus::class),
+                SelectFilter::make('source')
+                    ->options(StampSource::class)
+                    ->label('Source'),
             ])
             ->recordActions([
                 EditAction::make(),

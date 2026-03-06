@@ -2,12 +2,18 @@
 
 namespace App\Filament\Resources\DiscountCoupons\Tables;
 
+use App\Enums\ApprovalStatus;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Tables\Actions\Action;
+use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Filament\Forms\Components\Textarea;
+use Illuminate\Database\Eloquent\Collection;
 
 class DiscountCouponsTable
 {
@@ -43,6 +49,9 @@ class DiscountCouponsTable
                 TextColumn::make('usage_per_user')
                     ->numeric()
                     ->sortable(),
+                TextColumn::make('approval_status')
+                    ->badge()
+                    ->sortable(),
                 TextColumn::make('starts_at')
                     ->dateTime()
                     ->sortable(),
@@ -62,13 +71,65 @@ class DiscountCouponsTable
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                //
+                SelectFilter::make('approval_status')
+                    ->options(ApprovalStatus::class)
+                    ->label('Approval Status'),
             ])
             ->recordActions([
+                Action::make('approve')
+                    ->label('Approve')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->visible(fn ($record) => $record->approval_status !== ApprovalStatus::Approved)
+                    ->requiresConfirmation()
+                    ->action(function ($record) {
+                        $record->update([
+                            'approval_status' => ApprovalStatus::Approved,
+                            'is_active' => true,
+                            'rejection_reason' => null,
+                        ]);
+                    }),
+                Action::make('reject')
+                    ->label('Reject')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->visible(fn ($record) => $record->approval_status !== ApprovalStatus::Rejected)
+                    ->form([
+                        Textarea::make('rejection_reason')
+                            ->label('Reason for rejection')
+                            ->placeholder('Optional: explain why this deal was rejected')
+                            ->maxLength(500),
+                    ])
+                    ->action(function ($record, array $data) {
+                        $record->update([
+                            'approval_status' => ApprovalStatus::Rejected,
+                            'is_active' => false,
+                            'rejection_reason' => $data['rejection_reason'] ?? null,
+                        ]);
+                    }),
                 EditAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    BulkAction::make('bulk_approve')
+                        ->label('Approve Selected')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->requiresConfirmation()
+                        ->action(fn (Collection $records) => $records->each(fn ($record) => $record->update([
+                            'approval_status' => ApprovalStatus::Approved,
+                            'is_active' => true,
+                            'rejection_reason' => null,
+                        ]))),
+                    BulkAction::make('bulk_reject')
+                        ->label('Reject Selected')
+                        ->icon('heroicon-o-x-circle')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->action(fn (Collection $records) => $records->each(fn ($record) => $record->update([
+                            'approval_status' => ApprovalStatus::Rejected,
+                            'is_active' => false,
+                        ]))),
                     DeleteBulkAction::make(),
                 ]),
             ]);

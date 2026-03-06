@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\DiscountCoupons\Schemas;
 
+use App\Enums\ApprovalStatus;
 use App\Enums\DiscountType;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
@@ -48,6 +49,15 @@ class DiscountCouponForm
                 DateTimePicker::make('expires_at'),
                 Toggle::make('is_active')
                     ->required(),
+                Select::make('approval_status')
+                    ->options(ApprovalStatus::class)
+                    ->default(ApprovalStatus::Approved)
+                    ->required(),
+                Textarea::make('rejection_reason')
+                    ->label('Rejection Reason')
+                    ->placeholder('Reason for rejection (visible to merchant)')
+                    ->maxLength(500)
+                    ->columnSpanFull(),
             ]);
     }
 }

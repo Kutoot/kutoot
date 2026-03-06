@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Seller;
 
+use App\Enums\ApprovalStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Seller\StoreMerchantCouponRequest;
 use App\Http\Requests\Api\V1\Seller\UpdateMerchantCouponRequest;
@@ -38,7 +39,8 @@ class MerchantLocationCouponController extends Controller
     {
         $data = $request->validated();
         $data['merchant_location_id'] = $merchantLocation->id;
-        $data['is_active'] = true;
+        $data['is_active'] = false;
+        $data['approval_status'] = ApprovalStatus::Pending;
 
         // Default coupon category if not provided
         if (empty($data['coupon_category_id'])) {
@@ -64,7 +66,7 @@ class MerchantLocationCouponController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Deal created successfully.',
+            'message' => 'Deal created successfully. It will be visible to customers once approved by admin.',
             'data' => new DiscountCouponResource($coupon),
         ], 201);
     }
@@ -83,6 +85,15 @@ class MerchantLocationCouponController extends Controller
         }
 
         $coupon->update($request->validated());
+
+        // If previously rejected, resubmission resets to pending for re-review
+        if ($coupon->approval_status === ApprovalStatus::Rejected) {
+            $coupon->update([
+                'approval_status' => ApprovalStatus::Pending,
+                'rejection_reason' => null,
+            ]);
+        }
+
         $coupon->loadCount('redemptions');
 
         return response()->json([

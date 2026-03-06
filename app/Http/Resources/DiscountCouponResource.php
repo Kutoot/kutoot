@@ -29,6 +29,8 @@ class DiscountCouponResource extends JsonResource
             'starts_at' => $this->starts_at?->toISOString(),
             'expires_at' => $this->expires_at?->toISOString(),
             'is_active' => $this->is_active,
+            'approval_status' => $this->approval_status?->value,
+            'rejection_reason' => $this->rejection_reason,
             'source' => $this->source,
             'category' => new CouponCategoryResource($this->whenLoaded('category')),
             'merchant_location' => new MerchantLocationResource($this->whenLoaded('merchantLocation')),

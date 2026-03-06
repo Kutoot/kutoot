@@ -9,6 +9,7 @@ enum StampSource: string implements HasLabel
     case PlanPurchase = 'plan_purchase';
     case BillPayment = 'bill_payment';
     case CouponRedemption = 'coupon_redemption';
+    case AdminGift = 'admin_gift';
 
     public function getLabel(): string
     {
@@ -16,6 +17,7 @@ enum StampSource: string implements HasLabel
             self::PlanPurchase => 'Plan Purchase',
             self::BillPayment => 'Bill Payment',
             self::CouponRedemption => 'Coupon Redemption',
+            self::AdminGift => 'Gift',
         };
     }
 }

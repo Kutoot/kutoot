@@ -22,6 +22,7 @@ class Stamp extends Model
         'transaction_id',
         'code',
         'source',
+        'gift_note',
         'status',
         'reserved_at',
         'expires_at',

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ApprovalStatus;
 use App\Enums\DiscountType;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -32,6 +33,8 @@ class DiscountCoupon extends Model
         'starts_at',
         'expires_at',
         'is_active',
+        'approval_status',
+        'rejection_reason',
     ];
 
     public function getActivitylogOptions(): LogOptions
@@ -56,6 +59,7 @@ class DiscountCoupon extends Model
             'starts_at' => 'datetime',
             'expires_at' => 'datetime',
             'is_active' => 'boolean',
+            'approval_status' => ApprovalStatus::class,
         ];
     }
 
@@ -105,8 +109,24 @@ class DiscountCoupon extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true)
+            ->where('approval_status', ApprovalStatus::Approved)
             ->where('starts_at', '<=', now())
             ->where(fn (Builder $q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()));
+    }
+
+    public function scopeApproved(Builder $query): Builder
+    {
+        return $query->where('approval_status', ApprovalStatus::Approved);
+    }
+
+    public function scopePending(Builder $query): Builder
+    {
+        return $query->where('approval_status', ApprovalStatus::Pending);
+    }
+
+    public function scopeRejected(Builder $query): Builder
+    {
+        return $query->where('approval_status', ApprovalStatus::Rejected);
     }
 
     public function scopeForPlan(Builder $query, int $planId): Builder

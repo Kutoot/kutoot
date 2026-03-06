@@ -327,10 +327,12 @@ Route::prefix('admin')->middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('users', \App\Http\Controllers\Api\V1\Admin\UserController::class)
         ->names('api.v1.admin.users');
 
-    // Stamps (read-only)
+    // Stamps (read-only + gift)
     Route::apiResource('stamps', \App\Http\Controllers\Api\V1\Admin\StampController::class)
         ->only(['index', 'show'])
         ->names('api.v1.admin.stamps');
+    Route::post('stamps/gift', [\App\Http\Controllers\Api\V1\Admin\StampController::class, 'gift'])
+        ->name('api.v1.admin.stamps.gift');
 
     // QR Codes
     Route::apiResource('qr-codes', \App\Http\Controllers\Api\V1\Admin\QrCodeController::class)

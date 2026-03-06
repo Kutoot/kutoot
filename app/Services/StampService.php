@@ -83,6 +83,21 @@ class StampService
     }
 
     /**
+     * Award gift/promotional stamps to a user from admin panel.
+     * These stamps are NOT editable by the user.
+     */
+    public function awardGiftStamps(User $user, Campaign $campaign, int $count, ?string $note = 'Gift'): int
+    {
+        if ($count <= 0) {
+            return 0;
+        }
+
+        $this->createStamps($user, $campaign, $count, StampSource::AdminGift, null, $note);
+
+        return $count;
+    }
+
+    /**
      * Update the stamp code when a user picks their own slot values.
      *
      * @param  array<int>  $slotValues
@@ -148,6 +163,7 @@ class StampService
         int $count,
         StampSource $source,
         ?Transaction $transaction = null,
+        ?string $giftNote = null,
     ): void {
         $isEditable = $this->isEditableSource($campaign, $source);
         $editableUntil = $isEditable
@@ -163,6 +179,7 @@ class StampService
                 'transaction_id' => $transaction?->id,
                 'code' => $code,
                 'source' => $source,
+                'gift_note' => $giftNote,
                 'status' => StampStatus::Used,
                 'editable_until' => $editableUntil,
             ]);
@@ -208,6 +225,7 @@ class StampService
         return match ($source) {
             StampSource::PlanPurchase => (bool) $campaign->stamp_editable_on_plan_purchase,
             StampSource::CouponRedemption => (bool) $campaign->stamp_editable_on_coupon_redemption,
+            StampSource::AdminGift => false, // Gift stamps are not editable
             default => false,
         };
     }

@@ -72,6 +72,22 @@ class MerchantLocationForm
                         TextInput::make('address')
                             ->columnSpanFull()
                             ->maxLength(65535),
+                        TextInput::make('latitude')
+                            ->label('Latitude')
+                            ->numeric()
+                            ->minValue(-90)
+                            ->maxValue(90)
+                            ->step(0.000001)
+                            ->placeholder('e.g. 28.613939')
+                            ->nullable(),
+                        TextInput::make('longitude')
+                            ->label('Longitude')
+                            ->numeric()
+                            ->minValue(-180)
+                            ->maxValue(180)
+                            ->step(0.000001)
+                            ->placeholder('e.g. 77.209023')
+                            ->nullable(),
                         TextInput::make('gst_number')
                             ->label('GST Number')
                             ->maxLength(255),

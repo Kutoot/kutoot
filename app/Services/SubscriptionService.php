@@ -168,6 +168,13 @@ class SubscriptionService
         return true;
     }
 
+    /**
+     * Revert user to the base (default) plan.
+     *
+     * IMPORTANT: Do NOT award stamps here. When a plan expires or is downgraded,
+     * the user should not receive stamps_on_purchase for the base plan.
+     * Existing stamps from the previous plan remain untouched.
+     */
     public function revertToBasePlan(User $user): ?UserSubscription
     {
         $basePlan = SubscriptionPlan::where('is_default', true)->first();
