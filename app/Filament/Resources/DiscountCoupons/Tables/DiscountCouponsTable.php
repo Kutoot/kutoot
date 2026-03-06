@@ -3,11 +3,11 @@
 namespace App\Filament\Resources\DiscountCoupons\Tables;
 
 use App\Enums\ApprovalStatus;
+use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Tables\Actions\Action;
-use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -94,7 +94,7 @@ class DiscountCouponsTable
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->visible(fn ($record) => $record->approval_status !== ApprovalStatus::Rejected)
-                    ->form([
+                    ->schema([
                         Textarea::make('rejection_reason')
                             ->label('Reason for rejection')
                             ->placeholder('Optional: explain why this deal was rejected')

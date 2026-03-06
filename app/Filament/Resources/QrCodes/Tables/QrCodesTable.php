@@ -9,7 +9,7 @@ use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Filament\Tables\Actions\BulkAction;
+use Filament\Actions\BulkAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Illuminate\Database\Eloquent\Collection;
@@ -77,7 +77,7 @@ class QrCodesTable
                     BulkAction::make('bulk_print')
                         ->label('Bulk Print')
                         ->icon('heroicon-o-printer')
-                        ->form([
+                        ->schema([
                             Select::make('layout')
                                 ->options([
                                     '3-across' => 'Landscape (3 stickers across)',
