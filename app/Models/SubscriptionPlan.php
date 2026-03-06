@@ -27,6 +27,7 @@ class SubscriptionPlan extends Model
         'max_discounted_bills',
         'max_redeemable_amount',
         'duration_days',
+        'terms_and_conditions',
     ];
 
     public function getActivitylogOptions(): LogOptions

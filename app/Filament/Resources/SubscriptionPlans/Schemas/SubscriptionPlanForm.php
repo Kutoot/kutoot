@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\SubscriptionPlans\Schemas;
 
 use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
@@ -82,6 +83,25 @@ class SubscriptionPlanForm
                         TextInput::make('max_redeemable_amount')
                             ->required()
                             ->numeric(),
+                    ]),
+
+                Section::make('Terms and Conditions')
+                    ->schema([
+                        RichEditor::make('terms_and_conditions')
+                            ->label('Terms and Conditions')
+                            ->helperText('Specific terms and conditions for this subscription plan.')
+                            ->toolbarButtons([
+                                'bold',
+                                'italic',
+                                'strike',
+                                'link',
+                                'h2',
+                                'h3',
+                                'bulletList',
+                                'orderedList',
+                                'blockquote',
+                                'codeBlock',
+                            ]),
                     ]),
 
                 Section::make('Access')
