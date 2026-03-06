@@ -58,9 +58,8 @@ class DashboardController extends Controller
                 'duration_days' => $plan->duration_days,
                 'purchased_at' => $subscription->created_at?->format('M d, Y'),
                 'expires_at' => $subscription->expires_at?->format('M d, Y'),
-                'days_remaining' => $subscription->expires_at
-                    ? (int) max(0, now()->diffInDays($subscription->expires_at, false))
-                    : null,
+                'days_remaining' => app(\App\Services\SubscriptionService::class)
+                    ->calculateDaysRemaining($subscription->expires_at),
             ] : null,
             'primaryCampaign' => $user->primaryCampaign ? [
                 'id' => $user->primaryCampaign->id,

@@ -80,6 +80,8 @@ class SubscriptionController extends Controller
                 'plan_id' => $currentSubscription->plan_id,
                 'status' => $currentSubscription->status,
                 'expires_at' => $currentSubscription->expires_at?->toDateString(),
+                'days_remaining' => app(\App\Services\SubscriptionService::class)
+                    ->calculateDaysRemaining($currentSubscription->expires_at),
             ] : null,
             'primaryCampaignId' => $user?->primary_campaign_id,
             'availableCampaigns' => $availableCampaigns,

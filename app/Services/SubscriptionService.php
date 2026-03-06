@@ -18,6 +18,18 @@ class SubscriptionService
     ) {}
 
     /**
+     * Calculate days remaining for a subscription based on its expiry date.
+     */
+    public function calculateDaysRemaining(?\Carbon\CarbonInterface $expiresAt): ?int
+    {
+        if (! $expiresAt) {
+            return null;
+        }
+
+        return (int) max(0, now()->diffInDays($expiresAt, false));
+    }
+
+    /**
      * Upgrade (or purchase) a plan for the user.
      * Expires existing active subscriptions and creates a new one.
      * Reconciles campaign subscriptions and auto-subscribes to new campaigns.
