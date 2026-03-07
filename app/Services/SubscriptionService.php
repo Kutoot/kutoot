@@ -40,12 +40,13 @@ class SubscriptionService
      */
     public function upgradePlan(User $user, int $planId, ?Transaction $paidTransaction = null, array $campaignSelections = []): UserSubscription
     {
-        Log::info('upgradePlan called', ['user_id' => $user->id, 'plan_id' => $planId]);
+        Log::info('upgradePlan called', ['user_id' => $user->id, 'plan_id' => $planId, 'existing_active' => $user->subscriptions()->where('status', SubscriptionStatus::Active)->count()]);
 
         // Expire existing active subscriptions
-        $user->subscriptions()->where('status', SubscriptionStatus::Active)->update([
+        $expired = $user->subscriptions()->where('status', SubscriptionStatus::Active)->update([
             'status' => SubscriptionStatus::Expired,
         ]);
+        Log::info('upgradePlan expired existing subscriptions', ['user_id' => $user->id, 'expired_count' => $expired]);
 
         // Create new subscription
         $plan = SubscriptionPlan::find($planId);
@@ -129,6 +130,7 @@ class SubscriptionService
     {
         Log::info('setPrimaryCampaign called', ['user_id' => $user->id, 'campaign_id' => $campaignId]);
         $subscription = $user->effectiveSubscription();
+        Log::debug('setPrimaryCampaign effective subscription', ['user_id' => $user->id, 'subscription' => $subscription?->toArray()]);
 
         if (! $subscription) {
             Log::warning('setPrimaryCampaign aborted: no subscription', ['user_id' => $user->id]);
@@ -205,16 +207,19 @@ class SubscriptionService
      */
     public function revertToBasePlan(User $user): ?UserSubscription
     {
+        Log::info('revertToBasePlan called', ['user_id' => $user->id]);
         $basePlan = SubscriptionPlan::where('is_default', true)->first();
 
         if (! $basePlan) {
+            Log::warning('revertToBasePlan failed: no default plan defined');
             return null;
         }
 
         // Expire existing active subscriptions
-        $user->subscriptions()->where('status', SubscriptionStatus::Active)->update([
+        $count = $user->subscriptions()->where('status', SubscriptionStatus::Active)->update([
             'status' => SubscriptionStatus::Expired,
         ]);
+        Log::info('revertToBasePlan expired subscriptions', ['user_id' => $user->id, 'expired_count' => $count]);
 
         $subscription = UserSubscription::create([
             'user_id' => $user->id,
@@ -235,6 +240,7 @@ class SubscriptionService
      */
     public function recordTermsAcceptance(User $user, SubscriptionPlan $plan): \App\Models\SubscriptionConsent
     {
+        Log::info('recordTermsAcceptance', ['user_id' => $user->id, 'plan_id' => $plan->id]);
         return \App\Models\SubscriptionConsent::updateOrCreate(
             [
                 'user_id' => $user->id,
@@ -254,19 +260,48 @@ class SubscriptionService
     public function assignDefaultPlan(User $user): ?UserSubscription
     {
         Log::info('assignDefaultPlan called', ['user_id' => $user->id]);
-        // Guard: skip if user already has an active subscription
-        if ($user->activeSubscription()->exists()) {
-            Log::info('assignDefaultPlan skipping because active subscription exists', ['user_id' => $user->id]);
-            return $user->activeSubscription;
-        }
 
         $basePlan = SubscriptionPlan::where('is_default', true)->first();
-
         if (! $basePlan) {
+            Log::warning('assignDefaultPlan no default plan configured');
             return null;
         }
 
-        // Create the default subscription (no expiry for base plan)
+        // If there's an existing active subscription, we only skip when it's *not* the base plan.
+        $active = $user->activeSubscription()->first();
+        if ($active) {
+            if ($active->plan_id !== $basePlan->id) {
+                Log::info('assignDefaultPlan skipping because active non-base subscription exists', ['user_id' => $user->id, 'plan_id' => $active->plan_id]);
+                return $active;
+            }
+
+            // active subscription is already the default plan; ensure bonus stamps have been awarded
+            if ($basePlan->stamps_on_purchase > 0 && $user->primary_campaign_id) {
+                $alreadyAwarded = $user->stamps()
+                    ->where('source', 'plan_purchase')
+                    ->exists();
+
+                if (! $alreadyAwarded) {
+                    Log::info('assignDefaultPlan awarding missing stamps for existing base subscription', ['user_id' => $user->id, 'plan_id' => $basePlan->id, 'stamps_on_purchase' => $basePlan->stamps_on_purchase]);
+                    $transaction = Transaction::create([
+                        'user_id' => $user->id,
+                        'amount' => 0,
+                        'original_bill_amount' => 0,
+                        'total_amount' => 0,
+                        'payment_status' => PaymentStatus::Completed,
+                        'payment_gateway' => 'plan_upgrade',
+                        'payment_id' => 'PLAN-'.$basePlan->id.'-'.now()->timestamp,
+                        'type' => TransactionType::PlanPurchase,
+                        'commission_amount' => 0,
+                    ]);
+
+                    $this->stampService->awardStampsForPlanPurchase($user, $basePlan, transaction: $transaction);
+                }
+            }
+
+        }
+
+        // no active subscription – create the default subscription (no expiry for base plan)
         $subscription = UserSubscription::create([
             'user_id' => $user->id,
             'plan_id' => $basePlan->id,
