@@ -240,6 +240,14 @@ class User extends Authenticatable implements FilamentUser, HasEmailAuthenticati
         return $this->hasMany(Transaction::class);
     }
 
+    /**
+     * @return HasMany<SubscriptionConsent, $this>
+     */
+    public function consents(): HasMany
+    {
+        return $this->hasMany(SubscriptionConsent::class);
+    }
+
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('avatar')

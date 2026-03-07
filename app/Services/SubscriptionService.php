@@ -212,4 +212,21 @@ class SubscriptionService
 
         return $subscription;
     }
+
+    /**
+     * Record that a user has accepted the terms and conditions for a subscription plan.
+     * Uses updateOrCreate to ensure we track the latest acceptance timestamp.
+     */
+    public function recordTermsAcceptance(User $user, SubscriptionPlan $plan): \App\Models\SubscriptionConsent
+    {
+        return \App\Models\SubscriptionConsent::updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'plan_id' => $plan->id,
+            ],
+            [
+                'accepted_at' => now(),
+            ]
+        );
+    }
 }

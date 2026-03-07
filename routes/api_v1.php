@@ -234,6 +234,8 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('api.v1.subscriptions.primary-campaign');
     Route::get('/subscriptions/available-campaigns', [SubscriptionController::class, 'availableCampaigns'])
         ->name('api.v1.subscriptions.available-campaigns');
+    Route::post('/subscriptions/record-consent', [SubscriptionController::class, 'recordConsent'])
+        ->name('api.v1.subscriptions.record-consent');
 
     // Stamps
     Route::get('/stamps', [StampController::class, 'index'])
