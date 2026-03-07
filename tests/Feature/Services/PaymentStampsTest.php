@@ -37,6 +37,7 @@ use App\Models\User;
 use App\Models\UserSubscription;
 use App\Services\StampService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 
 uses(RefreshDatabase::class);
 
@@ -417,4 +418,48 @@ test('different plans yield different stamps for same bill amount', function () 
 
     expect($goldStamps)->toBe(10);
     expect($silverStamps)->toBe(2);
+});
+
+// ────────────────────────────────────────────────────────────────────────────────
+// Logging behavior tests
+// ────────────────────────────────────────────────────────────────────────────────
+
+test('assignDefaultPlan produces expected log messages', function () {
+    Log::spy();
+
+    // ensure default plan exists with stamps
+    $basePlan = SubscriptionPlan::factory()->create([
+        'is_default' => true,
+        'stamps_on_purchase' => 3,
+    ]);
+
+    $user = User::factory()->create();
+
+    // call the service directly
+    app(\App\Services\SubscriptionService::class)->assignDefaultPlan($user);
+
+    Log::shouldHaveReceived('info')
+        ->with('assignDefaultPlan called', \Mockery::on(fn($ctx) => $ctx['user_id'] === $user->id));
+    Log::shouldHaveReceived('info')
+        ->with('assignDefaultPlan created subscription and reconciled campaigns', \Mockery::on(fn($ctx) => $ctx['user_id'] === $user->id));
+    Log::shouldHaveReceived('info')
+        ->with('assignDefaultPlan preparing to award bonus stamps', \Mockery::on(fn($ctx) => $ctx['user_id'] === $user->id && $ctx['plan_id'] === $basePlan->id));
+});
+
+
+test('assignDefaultPlan logs skip when user already has subscription', function () {
+    Log::spy();
+
+    $plan = SubscriptionPlan::factory()->create(['is_default' => true]);
+    $user = User::factory()->create();
+    UserSubscription::create([
+        'user_id' => $user->id,
+        'plan_id' => $plan->id,
+        'status' => SubscriptionStatus::Active,
+    ]);
+
+    app(\App\Services\SubscriptionService::class)->assignDefaultPlan($user);
+
+    Log::shouldHaveReceived('info')
+        ->with('assignDefaultPlan skipping because active subscription exists', \Mockery::on(fn($ctx) => $ctx['user_id'] === $user->id));
 });

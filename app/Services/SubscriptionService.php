@@ -9,6 +9,7 @@ use App\Models\SubscriptionPlan;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\UserSubscription;
+use Illuminate\Support\Facades\Log;
 
 class SubscriptionService
 {
@@ -39,6 +40,8 @@ class SubscriptionService
      */
     public function upgradePlan(User $user, int $planId, ?Transaction $paidTransaction = null, array $campaignSelections = []): UserSubscription
     {
+        Log::info('upgradePlan called', ['user_id' => $user->id, 'plan_id' => $planId]);
+
         // Expire existing active subscriptions
         $user->subscriptions()->where('status', SubscriptionStatus::Active)->update([
             'status' => SubscriptionStatus::Expired,
@@ -56,6 +59,7 @@ class SubscriptionService
         // Use existing paid transaction or create a record for free plan upgrades
         if ($paidTransaction) {
             $paidTransaction->update(['payment_status' => PaymentStatus::Completed]);
+            Log::info('Using existing paid transaction for plan upgrade', ['transaction_id' => $paidTransaction->id, 'user_id' => $user->id]);
             $transaction = $paidTransaction;
         } else {
             $planPrice = (float) ($plan?->price ?? 0);
@@ -70,6 +74,7 @@ class SubscriptionService
                 'type' => TransactionType::PlanPurchase,
                 'commission_amount' => 0,
             ]);
+            Log::info('Created transaction for plan upgrade', ['transaction_id' => $transaction->id, 'user_id' => $user->id, 'plan_id' => $planId, 'amount' => $planPrice]);
         }
 
         // Reconcile campaign subscriptions for the new plan
@@ -104,6 +109,12 @@ class SubscriptionService
         }
 
         if ($plan && $plan->stamps_on_purchase > 0 && $user->primary_campaign_id) {
+            Log::info('Awarding stamps for plan purchase during upgradePlan', [
+                'user_id' => $user->id,
+                'plan_id' => $plan->id,
+                'stamps_on_purchase' => $plan->stamps_on_purchase,
+                'primary_campaign_id' => $user->primary_campaign_id,
+            ]);
             $this->stampService->awardStampsForPlanPurchase($user, $plan, transaction: $transaction);
         }
 
@@ -116,15 +127,18 @@ class SubscriptionService
      */
     public function setPrimaryCampaign(User $user, int $campaignId): bool
     {
+        Log::info('setPrimaryCampaign called', ['user_id' => $user->id, 'campaign_id' => $campaignId]);
         $subscription = $user->effectiveSubscription();
 
         if (! $subscription) {
+            Log::warning('setPrimaryCampaign aborted: no subscription', ['user_id' => $user->id]);
             return false;
         }
 
         $plan = SubscriptionPlan::find($subscription->plan_id);
 
         if (! $plan) {
+            Log::warning('setPrimaryCampaign aborted: plan not found for subscription', ['user_id' => $user->id, 'subscription_id' => $subscription->id]);
             return false;
         }
 
@@ -132,6 +146,7 @@ class SubscriptionService
         $isAccessible = $plan->campaigns()->where('campaigns.id', $campaignId)->exists();
 
         if (! $isAccessible) {
+            Log::warning('setPrimaryCampaign aborted: campaign not accessible under plan', ['user_id' => $user->id, 'campaign_id' => $campaignId, 'plan_id' => $plan->id]);
             return false;
         }
 
@@ -146,6 +161,7 @@ class SubscriptionService
         // Award plan purchase stamps if this is a first-time campaign selection after plan purchase
         // and stamps haven't been awarded yet
         if ($plan->stamps_on_purchase > 0) {
+            Log::info('plan has stamps_on_purchase; checking whether to award', ['user_id' => $user->id, 'plan_id' => $plan->id, 'campaign_id' => $campaignId]);
             $alreadyAwarded = $user->stamps()
                 ->where('campaign_id', $campaignId)
                 ->where('source', 'plan_purchase')
@@ -237,8 +253,10 @@ class SubscriptionService
      */
     public function assignDefaultPlan(User $user): ?UserSubscription
     {
+        Log::info('assignDefaultPlan called', ['user_id' => $user->id]);
         // Guard: skip if user already has an active subscription
         if ($user->activeSubscription()->exists()) {
+            Log::info('assignDefaultPlan skipping because active subscription exists', ['user_id' => $user->id]);
             return $user->activeSubscription;
         }
 
@@ -260,6 +278,7 @@ class SubscriptionService
         $this->campaignSubscriptionService->reconcileAfterPlanChange($user, $basePlan);
         $this->campaignSubscriptionService->autoSubscribeForPlan($user, $basePlan);
         $user->refresh();
+        Log::info('assignDefaultPlan created subscription and reconciled campaigns', ['user_id' => $user->id, 'subscription_id' => $subscription->id, 'plan_id' => $basePlan->id]);
 
         // Set primary campaign if not already set
         if (! $user->primary_campaign_id) {
@@ -267,11 +286,13 @@ class SubscriptionService
             if ($firstCampaign) {
                 $this->campaignSubscriptionService->setPrimary($user, $firstCampaign->id);
                 $user->refresh();
+                Log::info('assignDefaultPlan set initial primary campaign', ['user_id' => $user->id, 'campaign_id' => $firstCampaign->id]);
             }
         }
 
         // Award bonus stamps for the default plan
         if ($basePlan->stamps_on_purchase > 0 && $user->primary_campaign_id) {
+            Log::info('assignDefaultPlan preparing to award bonus stamps', ['user_id' => $user->id, 'plan_id' => $basePlan->id, 'stamps_on_purchase' => $basePlan->stamps_on_purchase, 'primary_campaign_id' => $user->primary_campaign_id]);
             $transaction = Transaction::create([
                 'user_id' => $user->id,
                 'amount' => 0,

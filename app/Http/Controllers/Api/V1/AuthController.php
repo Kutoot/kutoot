@@ -15,6 +15,7 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -120,9 +121,11 @@ class AuthController extends Controller
         $token = $user->createToken($deviceName, $abilities);
 
         // Assign default plan on first login (if no active subscription exists)
+        Log::info('attempting assignDefaultPlan during login', ['user_id' => $user->id]);
         try {
             $this->subscriptionService->assignDefaultPlan($user);
         } catch (\Throwable $e) {
+            Log::error('assignDefaultPlan failed during login', ['user_id' => $user->id, 'error' => $e->getMessage()]);
             report($e); // Log but don't block login
         }
         $user->refresh();
