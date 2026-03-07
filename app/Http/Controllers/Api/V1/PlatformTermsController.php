@@ -33,7 +33,7 @@ class PlatformTermsController extends Controller
                 'version' => $terms->version,
                 'title' => $terms->title,
                 'content' => $terms->content,
-                'published_at' => $terms->published_at?->toISOString(),
+                'published_at' => $terms->published_at?->toIso8601String(),
             ],
         ]);
     }
