@@ -447,19 +447,143 @@ test('assignDefaultPlan produces expected log messages', function () {
 });
 
 
-test('assignDefaultPlan logs skip when user already has subscription', function () {
+test('assignDefaultPlan logs skip when user already has non-base subscription', function () {
     Log::spy();
 
-    $plan = SubscriptionPlan::factory()->create(['is_default' => true]);
+    $defaultPlan = SubscriptionPlan::factory()->create(['is_default' => true]);
+    $paidPlan = SubscriptionPlan::factory()->create(['is_default' => false, 'name' => 'Premium']);
     $user = User::factory()->create();
     UserSubscription::create([
         'user_id' => $user->id,
-        'plan_id' => $plan->id,
+        'plan_id' => $paidPlan->id,
         'status' => SubscriptionStatus::Active,
+        'expires_at' => now()->addDays(30),
     ]);
 
     app(\App\Services\SubscriptionService::class)->assignDefaultPlan($user);
 
     Log::shouldHaveReceived('info')
-        ->with('assignDefaultPlan skipping because active subscription exists', \Mockery::on(fn($ctx) => $ctx['user_id'] === $user->id));
+        ->with('assignDefaultPlan skipping because active non-base subscription exists', \Mockery::on(fn($ctx) => $ctx['user_id'] === $user->id));
+});
+
+// ────────────────────────────────────────────────────────────────────────────────
+// Default plan: no transaction, idempotent stamps, bill payment stamps
+// ────────────────────────────────────────────────────────────────────────────────
+
+test('assignDefaultPlan does not create a transaction for default plan', function () {
+    $defaultPlan = SubscriptionPlan::factory()->create([
+        'is_default' => true,
+        'stamps_on_purchase' => 3,
+        'stamp_denomination' => 100,
+        'stamps_per_denomination' => 1,
+    ]);
+
+    $campaign = Campaign::factory()->create([
+        'code' => 'BASECAMP',
+        'stamp_slots' => 6,
+        'stamp_slot_min' => 1,
+        'stamp_slot_max' => 49,
+        'is_active' => true,
+        'status' => CampaignStatus::Active,
+        'stamp_target' => 10000,
+        'issued_stamps_cache' => 0,
+    ]);
+    $defaultPlan->campaigns()->attach($campaign->id);
+
+    $user = User::factory()->create();
+
+    $txnCountBefore = Transaction::count();
+    app(\App\Services\SubscriptionService::class)->assignDefaultPlan($user);
+    $txnCountAfter = Transaction::count();
+
+    expect($txnCountAfter)->toBe($txnCountBefore)
+        ->and(UserSubscription::where('user_id', $user->id)->where('plan_id', $defaultPlan->id)->exists())->toBeTrue();
+});
+
+test('assignDefaultPlan does not re-award stamps on second login', function () {
+    $defaultPlan = SubscriptionPlan::factory()->create([
+        'is_default' => true,
+        'stamps_on_purchase' => 3,
+        'stamp_denomination' => 100,
+        'stamps_per_denomination' => 1,
+    ]);
+
+    $campaign = Campaign::factory()->create([
+        'code' => 'BASECAMP2',
+        'stamp_slots' => 6,
+        'stamp_slot_min' => 1,
+        'stamp_slot_max' => 49,
+        'is_active' => true,
+        'status' => CampaignStatus::Active,
+        'stamp_target' => 10000,
+        'issued_stamps_cache' => 0,
+    ]);
+    $defaultPlan->campaigns()->attach($campaign->id);
+
+    $user = User::factory()->create();
+    $subscriptionService = app(\App\Services\SubscriptionService::class);
+
+    // First login — stamps should be awarded
+    $subscriptionService->assignDefaultPlan($user);
+    $stampsAfterFirst = Stamp::where('user_id', $user->id)->where('source', StampSource::PlanPurchase)->count();
+    expect($stampsAfterFirst)->toBe(3);
+
+    // Second login — same method called again, no new stamps
+    $user->refresh();
+    $subscriptionService->assignDefaultPlan($user);
+    $stampsAfterSecond = Stamp::where('user_id', $user->id)->where('source', StampSource::PlanPurchase)->count();
+    expect($stampsAfterSecond)->toBe(3);
+});
+
+test('default plan user gets stamps on bill payment using plan denomination', function () {
+    $defaultPlan = SubscriptionPlan::factory()->create([
+        'is_default' => true,
+        'stamps_on_purchase' => 2,
+        'stamp_denomination' => 100,
+        'stamps_per_denomination' => 1,
+    ]);
+
+    $campaign = Campaign::factory()->create([
+        'code' => 'BASEBILL',
+        'stamp_slots' => 6,
+        'stamp_slot_min' => 1,
+        'stamp_slot_max' => 49,
+        'is_active' => true,
+        'status' => CampaignStatus::Active,
+        'stamp_target' => 10000,
+        'issued_stamps_cache' => 0,
+    ]);
+    $defaultPlan->campaigns()->attach($campaign->id);
+
+    $user = User::factory()->create(['primary_campaign_id' => $campaign->id]);
+    $user->campaigns()->attach($campaign->id, [
+        'is_primary' => true,
+        'subscribed_at' => now(),
+    ]);
+    UserSubscription::create([
+        'user_id' => $user->id,
+        'plan_id' => $defaultPlan->id,
+        'status' => SubscriptionStatus::Active,
+        'expires_at' => null, // default plan never expires
+    ]);
+
+    // ₹350 bill → floor(350/100)=3 → 3×1 = 3 stamps
+    $transaction = Transaction::factory()->create([
+        'user_id' => $user->id,
+        'original_bill_amount' => 350,
+        'amount' => 330,
+        'payment_status' => PaymentStatus::Paid,
+    ]);
+
+    $stampService = app(StampService::class);
+    $stampCount = $stampService->awardStampsForBill($transaction);
+
+    expect($stampCount)->toBe(3);
+    $billStamps = Stamp::where('user_id', $user->id)
+        ->where('source', StampSource::BillPayment)
+        ->get();
+    expect($billStamps)->toHaveCount(3);
+    foreach ($billStamps as $stamp) {
+        expect($stamp->campaign_id)->toBe($campaign->id);
+    }
 });
