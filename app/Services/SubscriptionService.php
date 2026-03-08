@@ -276,7 +276,7 @@ class SubscriptionService
             }
 
             // active subscription is already the default plan; ensure bonus stamps have been awarded
-            if ($basePlan->stamps_on_purchase > 0 && $user->primary_campaign_id) {
+            if ($basePlan->stamps_on_purchase > 0) {
                 $alreadyAwarded = $user->stamps()
                     ->where('source', 'plan_purchase')
                     ->exists();
@@ -328,7 +328,7 @@ class SubscriptionService
         }
 
         // Award bonus stamps for the default plan — only if not already awarded
-        if ($basePlan->stamps_on_purchase > 0 && $user->primary_campaign_id) {
+        if ($basePlan->stamps_on_purchase > 0) {
             $alreadyAwarded = $user->stamps()
                 ->where('source', 'plan_purchase')
                 ->exists();
