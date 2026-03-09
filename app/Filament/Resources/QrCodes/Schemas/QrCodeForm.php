@@ -11,7 +11,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ViewField;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
-use Filament\Forms\Set;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 
 class QrCodeForm
@@ -37,7 +37,7 @@ class QrCodeForm
                     ->preload()
                     ->required(fn (string $operation) => $operation === 'edit')
                     ->live()
-                    ->afterStateUpdated(fn (Get $get, \Filament\Forms\Set $set) =>
+                    ->afterStateUpdated(fn (Get $get, Set $set) =>
                         filled($get('merchant_location_id')) && $set('status', QrCodeStatus::Linked->value)
                     ),
                 Toggle::make('is_primary')
