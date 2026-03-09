@@ -90,7 +90,7 @@ class ExecutiveQrController extends Controller
             ->setForegroundColor(new Color(0, 0, 0))
             ->setBackgroundColor(new Color(255, 255, 255));
 
-        $logoPath = public_path('images/kutoot-initial-logo.svg');
+        $logoPath = public_path('images/kutoot-logo-initial.png');
         $logo = null;
         if (file_exists($logoPath)) {
             $logo = new Logo($logoPath);

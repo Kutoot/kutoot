@@ -148,7 +148,7 @@ class QrCodeController extends Controller
     public function image(QrCode $qrCode)
     {
         $url = route('qr.scan', ['token' => $qrCode->token]);
-        $logoPath = public_path('images/kutoot-full-logo.png');
+        $logoPath = public_path('images/kutoot-logo-initial.png');
 
         $builder = \Endroid\QrCode\Builder\Builder::create()
             ->data($url)

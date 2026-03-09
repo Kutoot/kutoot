@@ -258,7 +258,7 @@
             @foreach($chunk as $record)
                 @php
                     $url = route('qr.scan', ['token' => $record->token]);
-                    $logoPath = public_path('images/kutoot-full-logo.png');
+                    $logoPath = public_path('images/kutoot-logo-initial.png');
                     $builder = \Endroid\QrCode\Builder\Builder::create()
                         ->data($url)
                         ->encoding(new \Endroid\QrCode\Encoding\Encoding('UTF-8'))
@@ -280,7 +280,7 @@
                 <div class="qr-card">
                     <div class="card-content">
                         <div class="logo-badge">
-                            <img src="{{ asset('images/kutoot-full-logo.png') }}" alt="Kutoot" />
+                            <img src="{{ asset('images/kutoot-logo-initial.png') }}" alt="Kutoot" />
                         </div>
                         <div class="qr-wrapper">
                             <img src="{{ $qrCode->getDataUri() }}" alt="QR Code" class="qr-image" />
