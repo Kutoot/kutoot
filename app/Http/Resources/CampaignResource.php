@@ -56,6 +56,8 @@ class CampaignResource extends JsonResource
                 'mime_type' => $m->mime_type,
                 'size' => $m->size,
             ])),
+            // include sponsors relationship if loaded
+            'sponsors' => SponsorResource::collection($this->whenLoaded('sponsors')),
             'sponsor_image' => $this->when(
                 $this->getFirstMedia('sponsor_image'),
                 fn () => [
