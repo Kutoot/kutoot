@@ -24,7 +24,11 @@ return [
             'http://127.0.0.1:3000',
             'https://admin.kutoot.com',
             'https://kutoot.com',
-            'https://www.kutoot.com',
+	    'https://www.kutoot.com',
+	    'https://main.d1m3jak1924r3d.amplifyapp.com',
+	    'https://sanjeev-test.d1m3jak1924r3d.amplifyapp.com',
+	    'https://kutoot-backend.s3.ap-south-1.amazonaws.com'
+	   
         ],
 
     'allowed_origins_patterns' => [],
