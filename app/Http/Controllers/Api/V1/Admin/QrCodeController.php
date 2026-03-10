@@ -157,15 +157,16 @@ class QrCodeController extends Controller
             ->size(300)
             ->margin(8)
             ->roundBlockSizeMode(\Endroid\QrCode\RoundBlockSizeMode::Margin)
-            ->foregroundColor(new \Endroid\QrCode\Color\Color(31, 26, 46))
+            ->foregroundColor(new \Endroid\QrCode\Color\Color(0, 0, 0))
             ->backgroundColor(new \Endroid\QrCode\Color\Color(255, 255, 255));
 
         if (file_exists($logoPath)) {
             $builder = $builder
                 ->logoPath($logoPath)
                 ->logoResizeToWidth(60)
-                ->logoResizeToHeight(60)
-                ->logoPunchoutBackground(true);
+                ->logoResizeToHeight(60);
+                // the logo image should include any desired background;
+                // the builder no longer exposes a logoBackgroundColor option
         }
 
         $qrCode = $builder->build();

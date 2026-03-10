@@ -212,14 +212,15 @@
                         ->size(300)
                         ->margin(8)
                         ->roundBlockSizeMode(\Endroid\QrCode\RoundBlockSizeMode::Margin)
-                        // orange modules instead of black
-                        ->foregroundColor(new \Endroid\QrCode\Color\Color(242, 106, 27))
+                        // black modules
+                        ->foregroundColor(new \Endroid\QrCode\Color\Color(0, 0, 0))
                         ->backgroundColor(new \Endroid\QrCode\Color\Color(255, 255, 255));
                     if (file_exists($logoPath)) {
                         $builder = $builder
                             ->logoPath($logoPath)
                             ->logoResizeToWidth(60)
                             ->logoResizeToHeight(60)
+                            // any background should be baked into the logo file itself
                             ->logoPunchoutBackground(true);
                     }
                     $qrCode = $builder->build();

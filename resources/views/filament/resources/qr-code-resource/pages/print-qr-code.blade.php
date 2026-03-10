@@ -9,12 +9,15 @@
                 ->errorCorrectionLevel(\Endroid\QrCode\ErrorCorrectionLevel::High)
                 ->size(400)
                 ->margin(10)
-                ->roundBlockSizeMode(\Endroid\QrCode\RoundBlockSizeMode::Margin);
+                ->roundBlockSizeMode(\Endroid\QrCode\RoundBlockSizeMode::Margin)
+                ->foregroundColor(new \Endroid\QrCode\Color\Color(0, 0, 0))
+                ->backgroundColor(new \Endroid\QrCode\Color\Color(255, 255, 255));
             if (file_exists($logoPath)) {
                 $builder = $builder
                     ->logoPath($logoPath)
                     ->logoResizeToWidth(80)
                     ->logoResizeToHeight(80)
+                    // background should be baked into the logo asset itself
                     ->logoPunchoutBackground(true);
             }
             $qrCode = $builder->build();
