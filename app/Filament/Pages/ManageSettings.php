@@ -140,9 +140,10 @@ class ManageSettings extends Page
                 // Load from DB first, then fallback via SettingService
                 $dbSetting = AdminSetting::find($key);
 
-                if ($dbSetting && ! blank($dbSetting->value)) {
+                if ($dbSetting && !blank($dbSetting->value)) {
                     $value = $dbSetting->is_sensitive ? '' : AdminSetting::castValue($dbSetting->value, $dbSetting->type);
-                } else {
+                }
+                else {
                     $fallbackValue = SettingService::get($key);
                     // Don't pre-fill sensitive values from env
                     $value = $fieldDef['sensitive'] ? '' : $fallbackValue;
@@ -174,43 +175,43 @@ class ManageSettings extends Page
 
             foreach ($groupDef['fields'] as $key => $fieldDef) {
                 $dbSetting = AdminSetting::find($key);
-                $source = ($dbSetting && ! blank($dbSetting->value)) ? 'Database' : 'Environment (.env)';
+                $source = ($dbSetting && !blank($dbSetting->value)) ? 'Database' : 'Environment (.env)';
 
                 $field = match ($fieldDef['type']) {
-                    'password' => TextInput::make($key)
+                        'password' => TextInput::make($key)
                         ->label($fieldDef['label'])
                         ->password()
                         ->revealable()
                         ->placeholder($fieldDef['sensitive'] ? '••••••••' : '')
                         ->helperText("Source: {$source}"),
 
-                    'number' => TextInput::make($key)
+                        'number' => TextInput::make($key)
                         ->label($fieldDef['label'])
                         ->numeric()
                         ->helperText("Source: {$source}"),
 
-                    'select' => Select::make($key)
+                        'select' => Select::make($key)
                         ->label($fieldDef['label'])
                         ->options($fieldDef['options'] ?? [])
                         ->helperText("Source: {$source}"),
 
-                    'toggle' => Toggle::make($key)
+                        'toggle' => Toggle::make($key)
                         ->label($fieldDef['label'])
                         ->helperText("Source: {$source}"),
 
-                    'file' => FileUpload::make($key)
+                        'file' => FileUpload::make($key)
                         ->label($fieldDef['label'])
                         ->image()
-                        ->disk('public')
+                        ->disk(fn() => \App\Services\SettingService::get('media_disk', 'public'))
                         ->directory('settings')
                         ->visibility('public')
                         ->imagePreviewHeight('100')
                         ->helperText('Upload a logo image (PNG recommended, ~200×200px). Used inside all merchant QR codes.'),
 
-                    default => TextInput::make($key)
+                        default => TextInput::make($key)
                         ->label($fieldDef['label'])
                         ->helperText("Source: {$source}"),
-                };
+                    };
 
                 $fields[] = $field;
             }
@@ -218,19 +219,19 @@ class ManageSettings extends Page
             $tabs[] = Tab::make($groupDef['label'])
                 ->icon($groupDef['icon'])
                 ->schema([
-                    Section::make($groupDef['description'])
-                        ->schema($fields)
-                        ->columns(2),
-                ]);
+                Section::make($groupDef['description'])
+                ->schema($fields)
+                ->columns(2),
+            ]);
         }
 
         return $form
             ->schema([
-                Tabs::make('Settings')
-                    ->tabs($tabs)
-                    ->columnSpanFull()
-                    ->persistTabInQueryString(),
-            ])
+            Tabs::make('Settings')
+            ->tabs($tabs)
+            ->columnSpanFull()
+            ->persistTabInQueryString(),
+        ])
             ->statePath('data');
     }
 
@@ -241,7 +242,7 @@ class ManageSettings extends Page
 
         foreach ($this->getSettingsSchema() as $group => $groupDef) {
             foreach ($groupDef['fields'] as $key => $fieldDef) {
-                if (! array_key_exists($key, $formData)) {
+                if (!array_key_exists($key, $formData)) {
                     continue;
                 }
 
@@ -264,18 +265,18 @@ class ManageSettings extends Page
 
                 // Use updateOrCreate so settings that don't exist in DB yet are created
                 AdminSetting::updateOrCreate(
-                    ['key' => $key],
-                    [
-                        'value' => (string) ($value ?? ''),
-                        'type' => match ($fieldDef['type']) {
-                            'number' => 'integer',
-                            'toggle' => 'boolean',
-                            default => 'string',
-                        },
-                        'group' => $group,
-                        'label' => $fieldDef['label'],
-                        'is_sensitive' => $fieldDef['sensitive'] ?? false,
-                    ]
+                ['key' => $key],
+                [
+                    'value' => (string)($value ?? ''),
+                    'type' => match ($fieldDef['type']) {
+                        'number' => 'integer',
+                        'toggle' => 'boolean',
+                        default => 'string',
+                    },
+                    'group' => $group,
+                    'label' => $fieldDef['label'],
+                    'is_sensitive' => $fieldDef['sensitive'] ?? false,
+                ]
                 );
 
                 // Bust cache
@@ -313,33 +314,33 @@ class ManageSettings extends Page
     {
         return $schema
             ->components([
-                SchemaForm::make([EmbeddedSchema::make('form')])
-                    ->id('form')
-                    ->livewireSubmitHandler('save')
-                    ->footer([
-                        Actions::make($this->getFormActions())
-                            ->alignment($this->getFormActionsAlignment())
-                            ->key('form-actions'),
-                    ]),
-            ]);
+            SchemaForm::make([EmbeddedSchema::make('form')])
+            ->id('form')
+            ->livewireSubmitHandler('save')
+            ->footer([
+                Actions::make($this->getFormActions())
+                ->alignment($this->getFormActionsAlignment())
+                ->key('form-actions'),
+            ]),
+        ]);
     }
 
     protected function getFormActions(): array
     {
         return [
             Action::make('save')
-                ->label('Save Settings')
-                ->submit('save'),
+            ->label('Save Settings')
+            ->submit('save'),
 
             Action::make('resetToDefaults')
-                ->label('Reset to .env Defaults')
-                ->icon(Heroicon::OutlinedArrowPath)
-                ->color('danger')
-                ->requiresConfirmation()
-                ->modalHeading('Reset All Settings?')
-                ->modalDescription('This will delete all settings from the database and fall back to .env values. This action cannot be undone.')
-                ->modalSubmitActionLabel('Yes, reset all')
-                ->action(fn () => $this->resetToDefaults()),
+            ->label('Reset to .env Defaults')
+            ->icon(Heroicon::OutlinedArrowPath)
+            ->color('danger')
+            ->requiresConfirmation()
+            ->modalHeading('Reset All Settings?')
+            ->modalDescription('This will delete all settings from the database and fall back to .env values. This action cannot be undone.')
+            ->modalSubmitActionLabel('Yes, reset all')
+            ->action(fn() => $this->resetToDefaults()),
         ];
     }
 }

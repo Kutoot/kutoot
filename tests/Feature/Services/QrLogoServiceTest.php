@@ -2,7 +2,10 @@
 
 use App\Models\AdminSetting;
 use App\Services\QrLogoService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
+
+uses(RefreshDatabase::class);
 
 it('returns default logo path when no admin setting exists', function () {
     $path = QrLogoService::getLogoPath();
