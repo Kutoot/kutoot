@@ -61,13 +61,13 @@ class QrCodesTable
                     ->modalSubmitAction(false)
                     ->modalCancelAction(false)
                     ->modalWidth('lg'),
-                Action::make('print')
-                    ->label('Print')
-                    ->icon('heroicon-m-printer')
-                    ->modalContent(fn ($record) => view('filament.components.qr-code-preview', ['getRecord' => fn () => $record]))
-                    ->modalSubmitAction(false)
-                    ->modalCancelAction(false)
-                    ->modalWidth('lg'),
+                // Action::make('print')
+                //     ->label('Print')
+                //     ->icon('heroicon-m-printer')
+                //     ->modalContent(fn ($record) => view('filament.components.qr-code-preview', ['getRecord' => fn () => $record]))
+                //     ->modalSubmitAction(false)
+                //     ->modalCancelAction(false)
+                //     ->modalWidth('lg'),
                 EditAction::make(),
             ])
             ->toolbarActions([
