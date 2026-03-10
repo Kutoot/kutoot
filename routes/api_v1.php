@@ -47,9 +47,6 @@ Route::get('/cities', [CityController::class, 'index'])
 
 // ── Authentication (public) ─────────────────────────────────────────────
 Route::prefix('auth')->group(function () {
-    Route::get('/config', [AuthController::class, 'config'])
-        ->name('api.v1.auth.config');
-
     Route::post('/otp/send', [AuthController::class, 'sendOtp'])
         ->middleware('throttle:5,1')
         ->name('api.v1.auth.otp.send');
@@ -57,14 +54,6 @@ Route::prefix('auth')->group(function () {
     Route::post('/otp/verify', [AuthController::class, 'verifyOtp'])
         ->middleware('throttle:5,1')
         ->name('api.v1.auth.otp.verify');
-
-    Route::post('/register', [AuthController::class, 'register'])
-        ->middleware('throttle:5,1')
-        ->name('api.v1.auth.register');
-
-    Route::post('/login', [AuthController::class, 'login'])
-        ->middleware('throttle:5,1')
-        ->name('api.v1.auth.login');
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/user', [AuthController::class, 'user'])
@@ -111,14 +100,6 @@ Route::get('/store-categories/{merchantCategory}/stores', [MerchantCategoryContr
 Route::get('/sponsors', [SponsorController::class, 'index'])
     ->name('api.v1.sponsors.index');
 
-// ── Platform Terms (public) ─────────────────────────────────────────────
-Route::get('/terms/current', [\App\Http\Controllers\Api\V1\PlatformTermsController::class, 'current'])
-    ->name('api.v1.terms.current');
-
-// ── Public Config ───────────────────────────────────────────────────────
-Route::get('/config', [\App\Http\Controllers\Api\V1\ConfigController::class, 'index'])
-    ->name('api.v1.config');
-
 // ── Tags (public) ───────────────────────────────────────────────────────
 Route::get('/tags', [TagController::class, 'index'])
     ->name('api.v1.tags.index');
@@ -127,10 +108,6 @@ Route::get('/tags', [TagController::class, 'index'])
 Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])
     ->middleware('throttle:5,1')
     ->name('api.v1.newsletter.subscribe');
-
-// ── QR Codes (public - for scanning and image generation) ──────────────
-Route::get('/qr-codes/{qrCode}/image', [\App\Http\Controllers\Api\V1\Admin\QrCodeController::class, 'image'])
-    ->name('api.v1.qr-codes.image');
 
 // ── Merchant Location Registration & Auth (public) ─────────────────────
 Route::prefix('merchant-locations')->group(function () {
@@ -257,8 +234,6 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('api.v1.subscriptions.primary-campaign');
     Route::get('/subscriptions/available-campaigns', [SubscriptionController::class, 'availableCampaigns'])
         ->name('api.v1.subscriptions.available-campaigns');
-    Route::post('/subscriptions/record-consent', [SubscriptionController::class, 'recordConsent'])
-        ->name('api.v1.subscriptions.record-consent');
 
     // Stamps
     Route::get('/stamps', [StampController::class, 'index'])
@@ -298,29 +273,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/qr/{token}/scan', [QrScanController::class, 'scan'])
         ->name('api.v1.qr.scan');
 
-    // Platform Terms Acceptance
-    Route::post('/terms/accept', [\App\Http\Controllers\Api\V1\PlatformTermsController::class, 'accept'])
-        ->name('api.v1.terms.accept');
-
     // Merchant Locations
     Route::get('/merchant-locations', [MerchantLocationController::class, 'index'])
         ->name('api.v1.merchant-locations.index');
-
-    // Single merchant location by ID (used by QR → pay bill flow)
-    Route::get('/merchant-locations/{merchantLocation}', [MerchantLocationController::class, 'show'])
-        ->name('api.v1.merchant-locations.show');
 });
 
 // ── Admin endpoints ──────────────────────────────────────────────────────
 Route::prefix('admin')->middleware(['auth:sanctum'])->group(function () {
-    // Config Status (system health check)
-    Route::get('config-status', [\App\Http\Controllers\Api\V1\ConfigController::class, 'status'])
-        ->name('api.v1.admin.config-status');
-
-    // Platform Terms Management
-    Route::apiResource('platform-terms', \App\Http\Controllers\Api\V1\Admin\PlatformTermsController::class)
-        ->names('api.v1.admin.platform-terms');
-
     // Campaigns
     Route::apiResource('campaigns', \App\Http\Controllers\Api\V1\Admin\CampaignController::class)
         ->names('api.v1.admin.campaigns');
