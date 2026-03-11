@@ -5,12 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bulk Print QR Codes</title>
     @php
-        $bgUrl = asset('images/qr-background.png');
+        $bgUrl = \App\Services\QrBackgroundService::getBackgroundUrl();
+        $widthIn = \App\Services\SettingService::get('qr_print_width_in', 4);
+        $heightIn = \App\Services\SettingService::get('qr_print_height_in', 6);
     @endphp
     <style>
         @media print {
             @page {
-                size: {{ \App\Services\SettingService::get('qr_print_width_in', 4) }}in {{ \App\Services\SettingService::get('qr_print_height_in', 6) }}in;
+                size: {{ $widthIn }}in {{ $heightIn }}in;
                 margin: 0;
             }
             body {
@@ -31,19 +33,19 @@
             padding: 20px;
         }
 
-        /* Vertical stack of 4x6 stickers */
+        /* Vertical stack of stickers */
         .page-container {
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 0;
             margin: 0 auto;
-            max-width: 4in;
+            max-width: {{ $widthIn }}in;
         }
 
         .sticker-card {
-            width: 4in;
-            height: 6in;
+            width: {{ $widthIn }}in;
+            height: {{ $heightIn }}in;
             position: relative;
             background-image: url('{{ $bgUrl }}');
             background-size: 100% 100%;
@@ -116,7 +118,7 @@
     <div class="toolbar no-print">
         <a href="javascript:history.back()" class="back-btn">&larr; Back to QR Codes</a>
         <div>
-            <span style="margin-right: 15px; font-size: 14px; color: #4b5563;">Stickers: {{ count($qrCodes) }} | 4" &times; 6" vertical</span>
+            <span style="margin-right: 15px; font-size: 14px; color: #4b5563;">Stickers: {{ count($qrCodes) }} | {{ $widthIn }}" &times; {{ $heightIn }}" vertical</span>
             <button class="print-btn" onclick="window.print()">Print Now</button>
         </div>
     </div>

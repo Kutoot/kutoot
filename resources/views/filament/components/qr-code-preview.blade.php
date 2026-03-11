@@ -1,7 +1,9 @@
 @php
     $url = route('qr.scan', ['token' => $getRecord()->token]);
     $dataUri = \App\Services\QrCodeBuilder::buildForUrl($url, 400);
-    $bgUrl = asset('images/qr-background.png');
+    $bgUrl = \App\Services\QrBackgroundService::getBackgroundUrl();
+    $widthIn = \App\Services\SettingService::get('qr_print_width_in', 4);
+    $heightIn = \App\Services\SettingService::get('qr_print_height_in', 6);
 @endphp
 
 <div class="flex flex-col items-center justify-center p-4 bg-white rounded-lg shadow">
@@ -14,7 +16,7 @@
     </button>
 
     {{-- Preview with qr-background --}}
-    <div class="mt-4 qr-sticker-preview" style="width: 200px; aspect-ratio: 4/6; background-image: url('{{ $bgUrl }}'); background-size: 100% 100%; background-repeat: no-repeat; position: relative; border-radius: 8px; overflow: hidden;">
+    <div class="mt-4 qr-sticker-preview" style="width: 200px; aspect-ratio: {{ $widthIn }}/{{ $heightIn }}; background-image: url('{{ $bgUrl }}'); background-size: 100% 100%; background-repeat: no-repeat; position: relative; border-radius: 8px; overflow: hidden;">
         <img src="{{ $dataUri }}" alt="QR Code" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[38%] h-auto rounded-lg" />
         <div class="absolute bottom-[16%] left-1/2 -translate-x-1/2 text-lg font-bold text-gray-800 whitespace-nowrap">{{ $getRecord()->unique_code }}</div>
     </div>
@@ -23,7 +25,7 @@
         <style>
             @media print {
                 @page {
-                    size: {{ \App\Services\SettingService::get('qr_print_width_in', 4) }}in {{ \App\Services\SettingService::get('qr_print_height_in', 6) }}in;
+                    size: {{ $widthIn }}in {{ $heightIn }}in;
                     margin: 0;
                 }
                 body {
@@ -34,8 +36,8 @@
                     font-family: 'Inter', sans-serif;
                 }
                 .qr-sticker-print {
-                    width: 4in;
-                    height: 6in;
+                    width: {{ $widthIn }}in;
+                    height: {{ $heightIn }}in;
                     position: relative;
                     background-image: url('{{ $bgUrl }}');
                     background-size: 100% 100%;

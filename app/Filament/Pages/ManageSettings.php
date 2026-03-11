@@ -120,7 +120,8 @@ class ManageSettings extends Page
                 'icon' => Heroicon::OutlinedPhoto,
                 'description' => 'Brand assets and QR print settings',
                 'fields' => [
-                    'qr_logo' => ['label' => 'QR Code Logo', 'type' => 'file', 'sensitive' => false],
+                    'qr_logo' => ['label' => 'QR Code Logo', 'type' => 'file', 'sensitive' => false, 'helperText' => 'Upload a logo image (PNG recommended, ~200×200px). Used inside all merchant QR codes.'],
+                    'qr_background' => ['label' => 'QR Print Background', 'type' => 'file', 'sensitive' => false, 'helperText' => 'Upload a background image for printed QR stickers. Used when printing QR codes. Falls back to default if not set.'],
                     'qr_print_width_in' => ['label' => 'QR Print Page Width (inches)', 'type' => 'number', 'sensitive' => false, 'default' => 4],
                     'qr_print_height_in' => ['label' => 'QR Print Page Height (inches)', 'type' => 'number', 'sensitive' => false, 'default' => 6],
                 ],
@@ -209,7 +210,7 @@ class ManageSettings extends Page
                         ->directory('settings')
                         ->visibility('public')
                         ->imagePreviewHeight('100')
-                        ->helperText('Upload a logo image (PNG recommended, ~200×200px). Used inside all merchant QR codes.'),
+                        ->helperText($fieldDef['helperText'] ?? 'Upload an image.'),
 
                         default => TextInput::make($key)
                         ->label($fieldDef['label'])
