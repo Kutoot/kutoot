@@ -23,12 +23,21 @@ class HeroSettingController extends Controller
             ]);
         }
 
+        $media = $setting->getMedia('hero_media');
+        $mediaArray = $media->map(fn ($m) => [
+            'id' => $m->id,
+            'url' => $m->getUrl(),
+            'preview' => $m->hasGeneratedConversion('thumb') ? $m->getUrl('thumb') : $m->getUrl(),
+            'mime_type' => $m->mime_type,
+        ])->values()->toArray();
+
         return response()->json([
             'data' => [
                 'locale' => $locale,
                 'title' => $setting->title,
                 'description' => $setting->description,
                 'is_active' => $setting->is_active,
+                'media' => $mediaArray,
             ],
         ]);
     }

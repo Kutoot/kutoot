@@ -32,8 +32,155 @@ class ViewMerchantApplication extends ViewRecord
         return [
             $this->getApproveAction(),
             $this->getRejectAction(),
+            $this->getViewCredentialsAction(),
+            $this->getGeneratePasswordAction(),
+            $this->getResendToEmailAction(),
+            $this->getResendToMobileAction(),
             EditAction::make(),
         ];
+    }
+
+    protected function getOwnerUser(): ?User
+    {
+        $locationId = $this->record->merchant_location_id;
+        if (! $locationId) {
+            return null;
+        }
+
+        $location = MerchantLocation::find($locationId);
+
+        return $location?->users()->wherePivot('role', 'owner')->first();
+    }
+
+    protected function generateAndUpdateCredentials(): array
+    {
+        $user = $this->getOwnerUser();
+        if (! $user) {
+            return [null, null];
+        }
+
+        $plainPassword = Str::random(10);
+        $user->update(['password' => Hash::make($plainPassword)]);
+
+        return [$user->username, $plainPassword];
+    }
+
+    protected function getViewCredentialsAction(): Action
+    {
+        return Action::make('viewCredentials')
+            ->label('View credentials')
+            ->icon('heroicon-o-eye')
+            ->color('gray')
+            ->visible(fn () => $this->record->isApproved() && $this->record->merchant_location_id)
+            ->modalHeading('Store credentials')
+            ->modalDescription('Username is shown below. Password cannot be retrieved—use "Resend to email" or "Resend to mobile" to send credentials, or use the Generate password action.')
+            ->modalSubmitAction(false)
+            ->modalCancelActionLabel('Close')
+            ->form([
+                \Filament\Forms\Components\Placeholder::make('username')
+                    ->label('Username')
+                    ->content(fn () => $this->getOwnerUser()?->username ?? '—'),
+            ])
+            ->action(fn () => null);
+    }
+
+    protected function getGeneratePasswordAction(): Action
+    {
+        return Action::make('generatePassword')
+            ->label('Generate password')
+            ->icon('heroicon-o-key')
+            ->color('gray')
+            ->visible(fn () => $this->record->isApproved() && $this->record->merchant_location_id)
+            ->requiresConfirmation()
+            ->modalHeading('Generate new password')
+            ->modalDescription('A new temporary password will be created. It will be shown in a notification—copy and share with the store owner. They should change it on first login.')
+            ->action(function () {
+                [$username, $password] = $this->generateAndUpdateCredentials();
+                if ($username) {
+                    Notification::make()
+                        ->title('New password generated')
+                        ->body("Username: {$username}\nTemporary password: {$password}\n\nCopy and share with the store owner.")
+                        ->success()
+                        ->persistent()
+                        ->send();
+                } else {
+                    Notification::make()->title('Error')->body('Could not find store owner.')->danger()->send();
+                }
+            });
+    }
+
+    protected function getResendToEmailAction(): Action
+    {
+        return Action::make('resendToEmail')
+            ->label('Resend to email')
+            ->icon('heroicon-o-envelope')
+            ->color('gray')
+            ->visible(fn () => $this->record->isApproved() && $this->record->merchant_location_id && $this->record->owner_email)
+            ->requiresConfirmation()
+            ->modalHeading('Resend credentials to email')
+            ->modalDescription("A new temporary password will be generated and sent to {$this->record->owner_email}.")
+            ->action(function () {
+                [$username, $plainPassword] = $this->generateAndUpdateCredentials();
+                if (! $username) {
+                    Notification::make()->title('Error')->body('Could not find store owner.')->danger()->send();
+                    return;
+                }
+
+                try {
+                    Mail::to($this->record->owner_email)->send(
+                        new MerchantCredentialsMail($this->record->store_name, $username, $plainPassword)
+                    );
+                    Notification::make()
+                        ->title('Credentials sent')
+                        ->body("Login details sent to {$this->record->owner_email}.")
+                        ->success()
+                        ->send();
+                } catch (\Exception $e) {
+                    Log::error("Failed to resend credentials email: {$e->getMessage()}");
+                    Notification::make()
+                        ->title('Failed to send')
+                        ->body('Could not send email. Please try again.')
+                        ->danger()
+                        ->send();
+                }
+            });
+    }
+
+    protected function getResendToMobileAction(): Action
+    {
+        return Action::make('resendToMobile')
+            ->label('Resend to mobile')
+            ->icon('heroicon-o-device-phone-mobile')
+            ->color('gray')
+            ->visible(fn () => $this->record->isApproved() && $this->record->merchant_location_id && $this->record->owner_mobile)
+            ->requiresConfirmation()
+            ->modalHeading('Resend credentials to mobile')
+            ->modalDescription("A new temporary password will be generated and sent via SMS to {$this->record->owner_mobile}.")
+            ->action(function () {
+                [$username, $plainPassword] = $this->generateAndUpdateCredentials();
+                if (! $username) {
+                    Notification::make()->title('Error')->body('Could not find store owner.')->danger()->send();
+                    return;
+                }
+
+                try {
+                    $sms = app(SmsContract::class);
+                    $message = "Kutoot store credentials: Store: {$this->record->store_name}. Username: {$username}, Password: {$plainPassword}. Change password after first login. -Team Kutoot";
+                    $sms->send($this->record->owner_mobile, $message);
+                    Notification::make()
+                        ->title('Credentials sent')
+                        ->body("Login details sent via SMS to {$this->record->owner_mobile}.")
+                        ->success()
+                        ->send();
+                } catch (\Exception $e) {
+                    Log::error("Failed to resend credentials SMS: {$e->getMessage()}");
+                    Notification::make()
+                        ->title('Failed to send')
+                        ->body('Could not send SMS. Please try again.')
+                        ->danger()
+                        ->send();
+                }
+            });
     }
 
     protected function getApproveAction(): Action

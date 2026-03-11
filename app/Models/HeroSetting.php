@@ -6,10 +6,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Image\Enums\Fit;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class HeroSetting extends Model
+class HeroSetting extends Model implements HasMedia
 {
-    use HasFactory, LogsActivity;
+    use HasFactory, InteractsWithMedia, LogsActivity;
 
     protected $fillable = [
         'title',
@@ -32,6 +36,24 @@ class HeroSetting extends Model
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->setDescriptionForEvent(fn (string $eventName): string => "Hero setting was {$eventName}");
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('hero_media')
+            ->acceptsMimeTypes([
+                'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+                'video/mp4', 'video/webm', 'video/quicktime',
+            ]);
+    }
+
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->addMediaConversion('thumb')
+            ->fit(Fit::Crop, 800, 450)
+            ->format('webp')
+            ->quality(85)
+            ->performOnCollections('hero_media');
     }
 
     /**

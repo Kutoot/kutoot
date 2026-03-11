@@ -55,6 +55,7 @@ class MerchantLocationAuthController extends Controller
             'message' => 'Login successful.',
             'data' => [
                 'token' => $token,
+                'requires_terms_acceptance' => ! $user->terms_accepted_at,
                 'seller' => [
                     'sellerId' => $user->id,
                     'shopId' => $location->id,
@@ -104,6 +105,7 @@ class MerchantLocationAuthController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
+                'requires_terms_acceptance' => ! $user->terms_accepted_at,
                 'sellerId' => $user->id,
                 'shopId' => $primaryLocation->id,
                 'shopName' => $primaryLocation->branch_name,

@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Models\HeroSetting;
 use Filament\Actions\Action;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -31,17 +32,26 @@ class HeroSettings extends Page
 
     public ?array $data = [];
 
+    public ?HeroSetting $heroSetting = null;
+
     // locale currently being edited/selected
     public ?string $currentLocale = null;
 
     public function mount(): void
     {
-        // determine which locale we're working with, either passed via query
-        // parameter or fallback to application locale
         $locale = request('locale') ?? app()->getLocale();
         $this->currentLocale = $locale;
 
-        $setting = HeroSetting::active($locale) ?? new HeroSetting();
+        $setting = HeroSetting::active($locale) ?? HeroSetting::where('locale', $locale)->first();
+        if (! $setting) {
+            $setting = HeroSetting::create([
+                'title' => '',
+                'description' => '',
+                'is_active' => true,
+                'locale' => $locale,
+            ]);
+        }
+        $this->heroSetting = $setting;
 
         $this->form->fill([
             'title' => $setting->title ?? '',
@@ -77,8 +87,22 @@ class HeroSettings extends Page
                     ->label('Show on Homepage')
                     ->helperText('When enabled, this text overlays all hero campaign slides.')
                     ->default(true),
+
+                SpatieMediaLibraryFileUpload::make('hero_media')
+                    ->label('Hero media (videos and images)')
+                    ->collection('hero_media')
+                    ->multiple()
+                    ->reorderable()
+                    ->acceptedFileTypes([
+                        'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+                        'video/mp4', 'video/webm', 'video/quicktime',
+                    ])
+                    ->maxSize(config('upload.max_file_size_kb', 10240))
+                    ->conversion('thumb')
+                    ->helperText('Add multiple images and/or videos for the hero carousel. Images and videos will rotate in the hero section.'),
             ])
-            ->statePath('data');
+            ->statePath('data')
+            ->model($this->heroSetting ?? new HeroSetting());
     }
 
     public function save(): void
@@ -86,19 +110,24 @@ class HeroSettings extends Page
         $data = $this->form->getState();
         $locale = $data['locale'] ?? $this->currentLocale;
 
-        // Deactivate all existing settings for this locale first
         HeroSetting::where('locale', $locale)
+            ->where('id', '!=', $this->heroSetting?->id)
             ->update(['is_active' => false]);
 
-        // Upsert the active setting for the current locale
-        $setting = HeroSetting::where('locale', $locale)->first() ?? new HeroSetting();
-        $setting->fill($data);
-        $setting->locale = $locale;
+        $setting = $this->heroSetting ?? HeroSetting::where('locale', $locale)->first() ?? new HeroSetting();
+        $setting->fill([
+            'title' => $data['title'] ?? '',
+            'description' => $data['description'] ?? '',
+            'is_active' => (bool) ($data['is_active'] ?? true),
+            'locale' => $locale,
+        ]);
         $setting->save();
+
+        $this->form->model($setting)->saveRelationships();
 
         Notification::make()
             ->title('Hero Settings Saved')
-            ->body('The hero banner text has been updated successfully.')
+            ->body('The hero banner text and media have been updated successfully.')
             ->success()
             ->send();
     }

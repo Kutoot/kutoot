@@ -47,8 +47,12 @@ class CampaignForm
                     ->required(),
                 DatePicker::make('start_date')
                     ->required()
-                    ->minDate(now()->startOfDay())
-                    ->rule('after_or_equal:today'),
+                    ->minDate(fn (): ?\Carbon\Carbon => str_contains(request()->route()?->getName() ?? '', 'create') ? now()->startOfDay() : null)
+                    ->rule(\Illuminate\Validation\Rule::when(
+                        str_contains(request()->route()?->getName() ?? '', 'create'),
+                        ['after_or_equal:today'],
+                        []
+                    )),
                 TextInput::make('reward_cost_target')
                     ->required()
                     ->numeric(),

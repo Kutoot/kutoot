@@ -109,7 +109,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                             href={route('login')}
                                             className="rounded-full px-4 py-2 text-sm font-bold text-lucky-700 border-2 border-lucky-300 hover:bg-lucky-50 transition-colors"
                                         >
-                                            Log in / Sign up
+                                            Login / Register
                                         </Link>
                                     </div>
                                 )}
@@ -241,7 +241,7 @@ export default function AuthenticatedLayout({ header, children }) {
                         <div className="border-t border-lucky-200 pb-1 pt-4">
                             <div className="mt-3 space-y-1">
                                 <ResponsiveNavLink href={route('login')}>
-                                    Log in / Sign up
+                                    Login / Register
                                 </ResponsiveNavLink>
                             </div>
                         </div>

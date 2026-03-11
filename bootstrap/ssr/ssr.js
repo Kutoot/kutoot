@@ -2304,7 +2304,7 @@ function AuthenticatedLayout({ header, children }) {
           {
             href: route("login"),
             className: "rounded-full px-4 py-2 text-sm font-bold text-lucky-700 border-2 border-lucky-300 hover:bg-lucky-50 transition-colors",
-            children: "Log in / Sign up"
+            children: "Login / Register"
           }
         ) }) }) }),
         /* @__PURE__ */ jsx("div", { className: "-me-2 flex items-center sm:hidden", children: /* @__PURE__ */ jsx(
@@ -4782,7 +4782,7 @@ function Welcome({ auth }) {
           {
             href: route("login"),
             className: "rounded-full px-5 py-2.5 font-bold text-sm text-lucky-700 border-2 border-lucky-300 hover:bg-lucky-50 transition-colors",
-            children: "Log in / Sign up"
+            children: "Login / Register"
           }
         ) })
       ] }),

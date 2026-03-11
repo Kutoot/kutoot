@@ -40,12 +40,15 @@ class DashboardController extends Controller
 
         $eligibleCampaigns = $plan
             ? $plan->campaigns()
+                ->with('category:id,name')
                 ->where('is_active', true)
                 ->where('status', 'active')
-                ->get(['campaigns.id', 'reward_name'])
+                ->get(['campaigns.id', 'reward_name', 'reward_cost', 'category_id'])
                 ->map(fn (Campaign $c) => [
                     'id' => $c->id,
                     'reward_name' => $c->reward_name,
+                    'reward_cost' => $c->reward_cost,
+                    'category' => $c->category?->name,
                 ])
             : collect();
 
@@ -81,6 +84,7 @@ class DashboardController extends Controller
                     'expires_at' => $subscription->expires_at?->toISOString(),
                     'days_remaining' => app(\App\Services\SubscriptionService::class)
                         ->calculateDaysRemaining($subscription->expires_at),
+                    'accessible_deal_names' => $plan->couponCategories()->pluck('name')->values()->toArray(),
                 ] : null,
                 'primary_campaign' => $user->primaryCampaign ? [
                     'id' => $user->primaryCampaign->id,

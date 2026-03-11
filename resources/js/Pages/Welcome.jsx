@@ -29,7 +29,7 @@ export default function Welcome({ auth }) {
                                 href={route('login')}
                                 className="rounded-full px-5 py-2.5 font-bold text-sm text-lucky-700 border-2 border-lucky-300 hover:bg-lucky-50 transition-colors"
                             >
-                                Log in / Sign up
+                                Login / Register
                             </Link>
                         )}
                     </div>
